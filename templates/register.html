@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>University Portal | Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            height: 100vh;
+            display: flex;
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        /* --- LEFT SIDE: IMAGE --- */
+        .brand-side {
+            flex: 1; 
+            background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%), url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-blend-mode: multiply;
+            background-size: cover;
+            background-position: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+        }
+        .brand-content h1 { font-size: 3rem; font-weight: 700; margin-bottom: 20px; }
+        .brand-content p { font-size: 1rem; opacity: 0.9; font-weight: 300; }
+
+        /* --- RIGHT SIDE: SCROLLABLE FORM --- */
+        .form-side {
+            flex: 1; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            overflow-y: auto; /* Allows scrolling if form is tall */
+        }
+
+        .form-wrapper { width: 100%; max-width: 450px; }
+
+        .header h2 { font-size: 1.8rem; color: #1a1a1a; font-weight: 700; margin-bottom: 5px; }
+        .header p { color: #888; font-size: 0.9rem; margin-bottom: 30px; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 8px; font-weight: 500; }
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+        .input-field:focus { border-color: #4a6cf7; background: #fff; outline: none; box-shadow: 0 4px 15px rgba(74, 108, 247, 0.1); }
+
+        .row { display: flex; gap: 15px; }
+        .col { flex: 1; }
+
+        /* Button */
+        .btn-register {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2);
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .btn-register:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3); }
+
+        .bottom-links { margin-top: 25px; text-align: center; font-size: 0.9rem; color: #666; }
+        .bottom-links a { color: #4a6cf7; text-decoration: none; font-weight: 600; }
+
+        .alert-error { background: #fff2f2; color: #ff3333; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid #ff3333; }
+    </style>
+</head>
+<body>
+
+    <div class="brand-side">
+        <div class="brand-content">
+            <h1>Join the Future<br>of Education.</h1>
+            <p>Create your account to access campus facilities, events, and resources.</p>
+        </div>
+    </div>
+
+    <div class="form-side">
+        <div class="form-wrapper">
+            <div class="header">
+                <h2>Create Account</h2>
+                <p>Fill in your details to get started.</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert-error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col input-group">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" class="input-field" required>
+                    </div>
+                    <div class="col input-group">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" class="input-field" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Student ID</label>
+                    <input type="text" name="username" class="input-field" required>
+                </div>
+                
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" class="input-field" required>
+                </div>
+
+                <div class="row">
+                    <div class="col input-group">
+                        <label>Password</label>
+                        <input type="password" name="password" class="input-field" required>
+                    </div>
+                    <div class="col input-group">
+                        <label>Confirm</label>
+                        <input type="password" name="confirm_password" class="input-field" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-register">Sign Up</button>
+
+                <div class="bottom-links">
+                    Already a member? <a href="{% url 'login' %}">Login here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

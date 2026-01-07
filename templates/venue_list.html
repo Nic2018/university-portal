@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Find Venues</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        body { display:flex; height:100vh; background:#f8f9fc; overflow:hidden; }
+        .sidebar { width:90px; background:#fff; display:flex; flex-direction:column; align-items:center; padding:30px 0; box-shadow:2px 0 20px rgba(0,0,0,0.03); z-index:10; }
+        .sidebar-icon { width:50px; height:50px; border-radius:12px; display:flex; justify-content:center; align-items:center; color:#999; font-size:1.2rem; margin-bottom:25px; transition:0.3s; text-decoration:none; position:relative; }
+        .sidebar-icon:hover { background:#f0f4ff; color:#4a6cf7; }
+        .sidebar-icon.active { background:#4a6cf7; color:white; box-shadow:0 10px 20px rgba(74,108,247,0.3); }
+        .sidebar-icon.logout { margin-top:auto; color:#ff5b5b; }
+        .sidebar-icon::after { content:attr(data-tooltip); position:absolute; left:70px; top:50%; transform:translateY(-50%) translateX(10px); background:#222; color:white; padding:6px 12px; border-radius:6px; font-size:0.85rem; white-space:nowrap; opacity:0; visibility:hidden; transition:0.2s; pointer-events:none; z-index:100; }
+        .sidebar-icon:hover::after { opacity:1; visibility:visible; transform:translateY(-50%) translateX(0); }
+        .main-content { flex:1; padding:30px; overflow-y:auto; }
+        .venue-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:25px; }
+        .venue-card { background:white; padding:25px; border-radius:18px; display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,0.03); transition:0.3s; border:1px solid #f5f5f5; }
+        .venue-card:hover { transform:translateY(-7px); }
+        .badge { padding:6px 12px; border-radius:8px; font-size:0.75rem; width:fit-content; margin-bottom:15px; font-weight:600; }
+        .badge.yes { background:#e6fcf5; color:#0ca678; } .badge.no { background:#fff5f5; color:#ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{% url 'dashboard' %}" class="sidebar-icon" data-tooltip="Dashboard"><i class="fas fa-home"></i></a>
+        <a href="{% url 'my_bookings' %}" class="sidebar-icon" data-tooltip="My Bookings"><i class="fas fa-list-ul"></i></a>
+        <a href="{% url 'calendar' %}" class="sidebar-icon" data-tooltip="View Schedule"><i class="fas fa-calendar-alt"></i></a>
+        
+        <a href="#" class="sidebar-icon active" data-tooltip="Campus Venues"><i class="fas fa-map-marker-alt"></i></a>
+        
+        <a href="{% url 'create_booking' %}" class="sidebar-icon" data-tooltip="Book a Room"><i class="fas fa-plus"></i></a>
+        
+        <a href="{% url 'profile' %}" class="sidebar-icon" data-tooltip="Settings"><i class="fas fa-user-cog"></i></a>
+        
+        <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Log Out"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+    <div class="main-content">
+        <h1>Find Venues</h1>
+        <form method="GET" style="margin-bottom:30px;"><input type="text" name="query" placeholder="Search..." style="padding:10px; border-radius:10px; border:1px solid #ddd; width:300px;"></form>
+        <div class="venue-grid">
+            {% for venue in venues %}
+            <div class="venue-card">
+                <span class="badge {% if venue.has_projector %}yes{% else %}no{% endif %}">{% if venue.has_projector %}Video Enabled{% else %}No Projector{% endif %}</span>
+                <h3 style="margin-bottom:5px;">{{ venue.name }}</h3>
+                <p style="color:#888; margin-bottom:20px;"><i class="fas fa-map-pin"></i> {{ venue.location }}</p>
+                <div style="margin-top:auto; display:flex; justify-content:space-between; color:#555;">
+                    <span><i class="fas fa-users"></i> {{ venue.capacity }}</span>
+                    <span>{% if venue.has_ac %}❄️ A/C{% else %}💨 Fan{% endif %}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

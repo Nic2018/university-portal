@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>University Portal | Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* RESET */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            height: 100vh;
+            display: flex; /* SPLIT SCREEN LAYOUT */
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        /* --- LEFT SIDE: THE ARTWORK --- */
+        .brand-side {
+            flex: 1.2; /* Takes up 60% of the screen */
+            background: linear-gradient(135deg, #003366 0%, #001f3f 100%), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-blend-mode: multiply; /* Blends the blue with the image */
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 80px;
+        }
+        
+        .brand-content { position: relative; z-index: 2; max-width: 600px; }
+        .brand-content h1 { font-size: 3.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 20px; }
+        .brand-content p { font-size: 1.1rem; opacity: 0.8; font-weight: 300; line-height: 1.6; }
+
+        /* Floating decoration circles for "depth" */
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 1;
+        }
+        .c1 { width: 300px; height: 300px; top: -50px; left: -50px; }
+        .c2 { width: 500px; height: 500px; bottom: -100px; right: -100px; }
+
+        /* --- RIGHT SIDE: THE FORM --- */
+        .form-side {
+            flex: 0.8; /* Takes up 40% of the screen */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: #fff;
+        }
+
+        .login-wrapper { width: 100%; max-width: 380px; }
+
+        .header-mobile { display: none; } /* Only for mobile */
+        
+        .welcome-text { margin-bottom: 40px; }
+        .welcome-text h2 { font-size: 2rem; color: #1a1a1a; margin-bottom: 10px; font-weight: 700; }
+        .welcome-text p { color: #888; font-size: 0.95rem; }
+
+        /* --- INPUT FIELDS --- */
+        .input-group { margin-bottom: 25px; position: relative; }
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 15px 15px 15px 45px; /* Space for icon */
+            border: 2px solid #f0f0f0; /* Subtle border */
+            border-radius: 12px; /* Smooth rounded corners */
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            color: #333;
+            background: #fafafa;
+        }
+        
+        .input-field:focus {
+            border-color: #4a6cf7;
+            background: #fff;
+            outline: none;
+            box-shadow: 0 4px 15px rgba(74, 108, 247, 0.1); /* Glow effect */
+        }
+
+        .icon {
+            position: absolute;
+            left: 15px;
+            top: 42px; /* Adjusted based on label height */
+            color: #aaa;
+            transition: 0.3s;
+        }
+        .input-field:focus + .icon, .input-field:focus ~ .icon { color: #4a6cf7; }
+
+        /* --- PREMIUM BUTTON --- */
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%); /* Gradient Background */
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2); /* Soft drop shadow */
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3);
+        }
+
+        /* --- ALERTS --- */
+        .alert-error {
+            background-color: #fff2f2;
+            color: #ff3333;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #ff3333;
+        }
+
+        /* --- LINKS --- */
+        .bottom-links { margin-top: 25px; text-align: center; font-size: 0.9rem; color: #666; }
+        .bottom-links a { color: #4a6cf7; text-decoration: none; font-weight: 600; }
+        .bottom-links a:hover { text-decoration: underline; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .brand-side { display: none; } /* Hide image on small screens */
+            .form-side { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="brand-side">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <div class="brand-content">
+            <h1>Manage your Campus<br>Life Seamlessly.</h1>
+            <p>Book venues, check schedules, and manage events with the new University Portal experience.</p>
+        </div>
+    </div>
+
+    <div class="form-side">
+        <div class="login-wrapper">
+            
+            <div class="welcome-text">
+                <h2>Welcome Back</h2>
+                <p>Please enter your details to sign in.</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="input-group">
+                    <label>Student ID / Username</label>
+                    <input type="text" name="username" class="input-field" placeholder="e.g. 20251120" required>
+                    <i class="fas fa-user icon"></i>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" name="password" class="input-field" placeholder="••••••••" required>
+                    <i class="fas fa-lock icon"></i>
+                </div>
+
+                <button type="submit" class="btn-login">Sign in to Portal</button>
+
+                <div class="bottom-links">
+                    New here? <a href="{% url 'register' %}">Create an account</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

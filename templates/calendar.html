@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>University Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        body { display:flex; height:100vh; background:#f8f9fc; overflow:hidden; }
+        .sidebar { width:90px; background:#fff; display:flex; flex-direction:column; align-items:center; padding:30px 0; box-shadow:2px 0 20px rgba(0,0,0,0.03); z-index:10; }
+        .sidebar-icon { width:50px; height:50px; border-radius:12px; display:flex; justify-content:center; align-items:center; color:#999; font-size:1.2rem; margin-bottom:25px; transition:0.3s; text-decoration:none; position:relative; }
+        .sidebar-icon:hover { background:#f0f4ff; color:#4a6cf7; }
+        .sidebar-icon.active { background:#4a6cf7; color:white; box-shadow:0 10px 20px rgba(74,108,247,0.3); }
+        .sidebar-icon.logout { margin-top:auto; color:#ff5b5b; }
+        .sidebar-icon::after { content:attr(data-tooltip); position:absolute; left:70px; top:50%; transform:translateY(-50%) translateX(10px); background:#222; color:white; padding:6px 12px; border-radius:6px; font-size:0.85rem; white-space:nowrap; opacity:0; visibility:hidden; transition:0.2s; pointer-events:none; z-index:100; }
+        .sidebar-icon:hover::after { opacity:1; visibility:visible; transform:translateY(-50%) translateX(0); }
+        .main-content { flex:1; display:flex; flex-direction:column; padding:25px; overflow-y:auto; }
+        .toolbar { display:flex; align-items:center; margin-bottom:20px; background:white; padding:15px 25px; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,0.02); }
+        table.calendar { width:100%; border-collapse:separate; border-spacing:5px; }
+        th { padding:15px; color:#888; font-weight:600; text-transform:uppercase; font-size:0.85rem; }
+        td { vertical-align:top; background:white; border-radius:12px; padding:10px; height:120px; border:1px solid #eee; transition:0.2s; width:14.28%; }
+        td:hover { border-color:#cdd6f7; box-shadow:0 5px 15px rgba(74,108,247,0.05); }
+        td.other-month { background-color:#fbfbfb; color:#ccc; }
+        .event-box { background:linear-gradient(135deg, #ff9f1c 0%, #ff7e5f 100%); color:white; padding:6px 8px; margin-bottom:4px; border-radius:6px; font-size:0.75rem; cursor:pointer; }
+        ul { list-style:none; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="{% url 'dashboard' %}" class="sidebar-icon" data-tooltip="Dashboard"><i class="fas fa-home"></i></a>
+        <a href="{% url 'my_bookings' %}" class="sidebar-icon" data-tooltip="My Bookings"><i class="fas fa-list-ul"></i></a>
+        
+        <a href="#" class="sidebar-icon active" data-tooltip="View Schedule"><i class="fas fa-calendar-alt"></i></a>
+        
+        <a href="{% url 'venue_list' %}" class="sidebar-icon" data-tooltip="Campus Venues"><i class="fas fa-map-marker-alt"></i></a>
+        <a href="{% url 'create_booking' %}" class="sidebar-icon" data-tooltip="Book a Room"><i class="fas fa-plus"></i></a>
+        
+        <a href="{% url 'profile' %}" class="sidebar-icon" data-tooltip="Settings"><i class="fas fa-user-cog"></i></a>
+        
+        <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Log Out"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+    <div class="main-content">
+        <div class="toolbar">
+            <h2 style="font-size:1.5rem; font-weight:700;">Schedule</h2>
+            <div style="margin-left:auto;">
+                <a href="?{{ prev_month }}" style="text-decoration:none; color:#555; font-weight:600; padding:0 15px;"><i class="fas fa-chevron-left"></i></a>
+                <span style="font-weight:600;">Month View</span>
+                <a href="?{{ next_month }}" style="text-decoration:none; color:#555; font-weight:600; padding:0 15px;"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+        {{ calendar }}
+    </div>
+</body>
+</html>

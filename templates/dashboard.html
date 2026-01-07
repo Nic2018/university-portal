@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
+
+        /* SIDEBAR PREMIUM */
+        .sidebar {
+            width: 90px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.03);
+            z-index: 10;
+        }
+        
+        .sidebar-icon {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            color: #999; font-size: 1.2rem;
+            margin-bottom: 25px; transition: 0.3s;
+            text-decoration: none;
+            position: relative; /* Needed for tooltip */
+        }
+        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; }
+        .sidebar-icon.active { background: #4a6cf7; color: white; box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3); }
+        .sidebar-icon.logout { margin-top: auto; color: #ff5b5b; }
+        .sidebar-icon.logout:hover { background: #fff2f2; }
+
+        /* --- CUSTOM TOOLTIP (The Black Box) --- */
+        .sidebar-icon::after {
+            content: attr(data-tooltip);
+            position: absolute; left: 70px; top: 50%;
+            transform: translateY(-50%) translateX(10px);
+            background-color: #222; color: white;
+            padding: 6px 12px; border-radius: 6px; font-size: 0.85rem;
+            white-space: nowrap; opacity: 0; visibility: hidden;
+            transition: 0.2s ease-in-out; pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100;
+        }
+        .sidebar-icon:hover::after {
+            opacity: 1; visibility: visible;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        /* MAIN AREA */
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+
+        .header h1 { font-size: 2.2rem; font-weight: 700; color: #1a1a1a; }
+        .header p { color: #888; margin-top: 5px; font-weight: 400; }
+
+        /* CARDS PREMIUM */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .card {
+            background: white; padding: 35px; border-radius: 20px;
+            text-decoration: none; position: relative; transition: 0.3s;
+            border: 1px solid #f0f0f0; display: flex; flex-direction: column; align-items: flex-start;
+        }
+        .card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: transparent; }
+
+        .icon-box {
+            width: 70px; height: 70px; border-radius: 18px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.8rem; margin-bottom: 25px;
+        }
+        .card.calendar .icon-box { background: #eef2ff; color: #4a6cf7; }
+        .card.booking .icon-box { background: #fff4e5; color: #ff9f1c; }
+        .card.search .icon-box { background: #e6fcf5; color: #0ca678; }
+
+        .card h3 { color: #1a1a1a; font-size: 1.4rem; font-weight: 600; margin-bottom: 10px; }
+        .card p { color: #777; font-size: 0.95rem; line-height: 1.6; }
+
+        .card-arrow {
+            position: absolute; bottom: 30px; right: 30px;
+            font-size: 1.2rem; color: #ddd; transition: 0.3s;
+        }
+        .card:hover .card-arrow { color: #4a6cf7; transform: translateX(5px); }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#" class="sidebar-icon active" data-tooltip="Dashboard"><i class="fas fa-home"></i></a>
+        
+        <a href="{% url 'my_bookings' %}" class="sidebar-icon" data-tooltip="My Bookings"><i class="fas fa-list-ul"></i></a>
+        <a href="{% url 'calendar' %}" class="sidebar-icon" data-tooltip="View Schedule"><i class="fas fa-calendar-alt"></i></a>
+        <a href="{% url 'venue_list' %}" class="sidebar-icon" data-tooltip="Campus Venues"><i class="fas fa-map-marker-alt"></i></a>
+        <a href="{% url 'create_booking' %}" class="sidebar-icon" data-tooltip="Book a Room"><i class="fas fa-plus"></i></a>
+        
+        <a href="{% url 'profile' %}" class="sidebar-icon" data-tooltip="Settings"><i class="fas fa-user-cog"></i></a>
+        
+        <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Log Out"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Hello, {{ user.first_name|default:user.username }} 👋</h1>
+            <p>Welcome to your premium student portal.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <a href="{% url 'calendar' %}" class="card calendar">
+                <div class="icon-box"><i class="fas fa-calendar-day"></i></div>
+                <h3>View Schedule</h3>
+                <p>Track your classes and events.</p>
+                <i class="fas fa-arrow-right card-arrow"></i>
+            </a>
+
+            <a href="{% url 'create_booking' %}" class="card booking">
+                <div class="icon-box"><i class="fas fa-pen-nib"></i></div>
+                <h3>Book a Room</h3>
+                <p>Reserve labs or halls easily.</p>
+                <i class="fas fa-arrow-right card-arrow"></i>
+            </a>
+
+            <a href="{% url 'venue_list' %}" class="card search">
+                <div class="icon-box"><i class="fas fa-search-location"></i></div>
+                <h3>Find Venues</h3>
+                <p>Explore campus facilities.</p>
+                <i class="fas fa-arrow-right card-arrow"></i>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

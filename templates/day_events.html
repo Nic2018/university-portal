@@ -1,0 +1,17 @@
+<h2>Check Daily Schedule</h2>
+<form method="get">
+    <label>Select Date:</label>
+    <input type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
+</form>
+
+<h3>Events on {{ selected_date }}:</h3>
+<ul>
+    {% for event in events %}
+        <li>
+            <strong>{{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}</strong>: 
+            {{ event.event_name }} (at {{ event.venue.name }})
+        </li>
+    {% empty %}
+        <p>No events scheduled for this day. The venue is free!</p>
+    {% endfor %}
+</ul>
