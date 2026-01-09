@@ -5,23 +5,29 @@
     <title>New Booking</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
-        /* ... Keep your existing CSS ... */
+        /* BASE STYLES */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
 
+        /* SIDEBAR */
         .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 10; }
         .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; text-decoration: none; position: relative; transition: all 0.3s ease; }
         .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
         .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
-        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
-        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 100; }
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } 
+        .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        
+        /* Tooltip */
+        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; z-index: 100; }
         .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
+        /* FORM AREA */
         .main-content { flex: 1; padding: 40px; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; }
         .form-container { background: white; width: 100%; max-width: 600px; padding: 50px; border-radius: 24px; margin-top: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
         
@@ -32,15 +38,17 @@
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 500; margin-bottom: 8px; color: #444; font-size: 0.9rem; }
         
+        /* Inputs */
         input, textarea, select { width: 100%; padding: 14px 18px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 0.95rem; background: #fafafa; transition: 0.3s; color: #333; font-family: 'Poppins', sans-serif; }
         input:focus, textarea:focus, select:focus { border-color: #4a6cf7; background: #fff; outline: none; }
         textarea { height: 100px; resize: none; }
         
+        /* Button */
         .btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3); }
         .btn-submit:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* Select2 Styles */
+        /* Select2 Override */
         .select2-container .select2-selection--single { height: 52px !important; padding: 10px 15px !important; border: 2px solid #f0f0f0 !important; border-radius: 12px !important; background-color: #fafafa !important; }
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 50px !important; right: 15px !important; }
         .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px !important; color: #333 !important; font-size: 0.95rem; }
@@ -51,7 +59,7 @@
         .status-taken { color: #dc2626; }
         .status-checking { color: #64748b; }
 
-        /* HIDE ELEMENTS BY DEFAULT */
+        /* Helper to Hide/Show Fields */
         .hidden-field { display: none; }
     </style>
 </head>
@@ -131,33 +139,37 @@
 
     <script>
         $(document).ready(function() {
-            // 1. Initialize Select2
+            // --- Initialize Select2 ---
             $('#id_venue').select2({ width: '100%', placeholder: "Select a Venue...", allowClear: true });
 
-            // 2. Date Picker
-            let baseConfig = { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, onClose: function() { checkAvailability(); } };
+            // --- Initialize Date Pickers ---
+            // Simplified: No longer reading URL params here because views.py does it!
+            let baseConfig = { 
+                enableTime: true, 
+                dateFormat: "Y-m-d H:i", 
+                time_24hr: true,
+                onClose: function() { checkAvailability(); } 
+            };
+
             flatpickr("#id_start_time", baseConfig);
             flatpickr("#id_end_time", baseConfig);
 
-            // 3. TOGGLE EVENT FIELDS LOGIC
-            // Run on load and on change
+            // --- TOGGLE FIELDS LOGIC ---
             function toggleFields() {
                 var purpose = $('#id_purpose').val();
                 if (purpose === 'EVENT') {
                     $('#event-name-group').slideDown();
                     $('#document-group').slideDown();
-                    // Make event name required via JS if it's visible? Optional based on your requirement.
                 } else {
                     $('#event-name-group').slideUp();
                     $('#document-group').slideUp();
                 }
             }
-
-            // Bind the toggle function
+            // Run on load and whenever 'purpose' changes
             $('#id_purpose').change(toggleFields);
-            toggleFields(); // Run once on load to set initial state
+            toggleFields(); 
 
-            // 4. Availability Check
+            // --- AVAILABILITY CHECK LOGIC ---
             $('#id_venue').on('change', checkAvailability);
             
             function checkAvailability() {
@@ -169,7 +181,7 @@
 
                 if (venue && start && end) {
                     statusDiv.html('<span class="status-checking"><i class="fas fa-spinner fa-spin"></i> Checking availability...</span>');
-                    btn.prop('disabled', true);
+                    btn.prop('disabled', true); // Disable button while checking
 
                     $.ajax({
                         url: "{% url 'check_availability' %}",
@@ -178,11 +190,14 @@
                         success: function (data) {
                             if (data.status === 'available') {
                                 statusDiv.html('<span class="status-available"><i class="fas fa-check-circle"></i> Venue is Available!</span>');
-                                btn.prop('disabled', false);
+                                btn.prop('disabled', false); // Enable button
                             } else {
                                 statusDiv.html('<span class="status-taken"><i class="fas fa-times-circle"></i> Venue is Busy at this time.</span>');
-                                btn.prop('disabled', true);
+                                btn.prop('disabled', true); // Keep disabled
                             }
+                        },
+                        error: function() {
+                            statusDiv.html('<span class="status-checking">Error connecting to server.</span>');
                         }
                     });
                 }

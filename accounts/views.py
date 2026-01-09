@@ -96,7 +96,7 @@ def create_booking_view(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        # UPDATED: Included request.FILES to handle document uploads
+        # Handles request.FILES for document uploads
         form = BookingForm(request.POST, request.FILES)
         
         if form.is_valid():
@@ -127,10 +127,22 @@ def create_booking_view(request):
             
             return redirect('dashboard')
     else:
+        # --- GET REQUEST (Page Load) ---
         initial_data = {}
+        
+        # 1. Check if a Venue ID was passed (from "Book This Venue" button)
         venue_id = request.GET.get('venue')
         if venue_id:
             initial_data['venue'] = venue_id
+            
+        # 2. Check if a Date was passed (from Calendar click)
+        # This is the fix you needed!
+        date_param = request.GET.get('date') 
+        if date_param:
+            # Pre-fill Start/End time with the clicked date
+            initial_data['start_time'] = f"{date_param} 09:00"
+            initial_data['end_time'] = f"{date_param} 22:00"
+
         form = BookingForm(initial=initial_data)
     
     return render(request, 'create_booking.html', {'form': form})
