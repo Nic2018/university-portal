@@ -9,7 +9,14 @@
     <style>
         /* RESET & BASE */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
+        
+        /* --- UPDATED BODY BACKGROUND (Fintech Blue) --- */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Option 1 */
+            overflow: hidden; 
+        }
 
         /* --- SIDEBAR --- */
         .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
@@ -23,13 +30,22 @@
         .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; z-index: 100; }
         .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
-        /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); display: flex; justify-content: center; align-items: center; }
+        /* --- UPDATED MAIN CONTENT --- */
+        .main-content { 
+            flex: 1; 
+            padding: 50px; 
+            overflow-y: auto; 
+            background: transparent; /* Changed to transparent */
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
 
         /* DETAIL CARD */
         .detail-card {
             background: white; width: 100%; max-width: 600px; padding: 40px; border-radius: 24px;
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); border: 1px solid #f1f5f9; position: relative;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2); /* Slightly darker shadow for contrast */
+            border: 1px solid #f1f5f9; position: relative;
         }
 
         .back-btn { position: absolute; top: 30px; left: 30px; text-decoration: none; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.3s; }

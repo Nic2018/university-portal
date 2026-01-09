@@ -11,33 +11,74 @@
     <style>
         /* RESET & BASE */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
 
-        /* SIDEBAR */
-        .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
-        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: all 0.3s ease; text-decoration: none; position: relative; }
-        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
-        .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
-        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        /* --- BODY BACKGROUND (Fintech Blue) --- */
+        body {
+            display: flex;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* Option 1 */
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR (Glass Effect) --- */
+        .sidebar { 
+            width: 90px; 
+            background: rgba(0, 0, 0, 0.2); /* Transparent Dark */
+            backdrop-filter: blur(12px);    /* Blur Effect */
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; flex-direction: column; align-items: center; padding: 30px 0; z-index: 100; 
+        }
+
+        /* Sidebar Icons (Light Color for Dark Background) */
+        .sidebar-icon { 
+            width: 50px; height: 50px; border-radius: 14px; 
+            display: flex; justify-content: center; align-items: center; 
+            color: #94a3b8; /* Light Gray */
+            font-size: 1.3rem; margin-bottom: 25px; 
+            transition: all 0.3s ease; text-decoration: none; position: relative; 
+        }
+        
+        .sidebar-icon:hover { 
+            background: rgba(255, 255, 255, 0.1); 
+            color: #ffffff; 
+            transform: translateY(-2px); 
+        }
+        
+        .sidebar-icon.active { 
+            background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); 
+            color: white; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); 
+        }
+        
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } 
+        .sidebar-icon.logout:hover { background: rgba(255, 85, 85, 0.1); color: #ff6b6b; }
+
+        /* Tooltip */
         .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 100; }
         .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
-        /* MAIN CONTENT */
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
+        /* MAIN CONTENT - MADE TRANSPARENT */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: transparent;
+        }
 
-        /* WELCOME HEADER */
+        /* WELCOME HEADER - UPDATED TEXT COLOR FOR CONTRAST */
         .header { margin-bottom: 30px; }
-        .header h1 { font-size: 2rem; font-weight: 700; color: #1e293b; }
-        .header p { color: #64748b; font-size: 1rem; margin-top: 5px; }
+        .header h1 { font-size: 2rem; font-weight: 700; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header p { color: #e0e7ff; font-size: 1rem; margin-top: 5px; }
 
-        /* ACTION CARDS (Find, Book, Check) */
+        /* ACTION CARDS */
         .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
         
         .action-card {
             background: white; border-radius: 20px; padding: 25px; display: flex; align-items: center; gap: 20px;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); text-decoration: none; transition: 0.3s; border: 1px solid #f1f5f9;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2); text-decoration: none; transition: 0.3s; border: none;
         }
-        .action-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: transparent; }
+        .action-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); }
 
         .icon-box { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
         .icon-blue { background: #e0f2fe; color: #0284c7; }
@@ -47,14 +88,14 @@
         .card-info h3 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
         .card-info span { color: #64748b; font-size: 0.85rem; font-weight: 500; }
 
-        /* --- 2. NEW MAP SECTION --- */
+        /* MAP SECTION */
         .map-section {
             background: white;
             border-radius: 24px;
             padding: 25px;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
-            border: 1px solid #f1f5f9;
-            height: 500px; /* Adjust height as needed */
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+            border: none;
+            height: 500px;
             display: flex;
             flex-direction: column;
         }
@@ -63,10 +104,10 @@
         .map-header h3 { font-size: 1.2rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
         
         #campus-map {
-            flex: 1; /* Fills remaining height */
+            flex: 1;
             width: 100%;
             border-radius: 16px;
-            z-index: 1; /* Ensure it sits below sidebar tooltips */
+            z-index: 1;
         }
     </style>
 </head>
@@ -136,31 +177,16 @@
 
     <script>
         // --- MAP INITIALIZATION ---
-        // 1. Create the map and set default view (Coords: Latitude, Longitude, Zoom Level)
-        // You can change [3.140853, 101.693207] to your actual University coordinates
         var map = L.map('campus-map').setView([3.140853, 101.693207], 16);
 
-        // 2. Add the Tile Layer (The visual map images)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // 3. Add Custom Markers (Pins)
-        // Format: L.marker([lat, long]).addTo(map).bindPopup("Message");
-
-        // Example: Block A
-        L.marker([3.1412, 101.6925]).addTo(map)
-            .bindPopup("<b>Block A</b><br>Lecture Halls & Labs")
-            .openPopup();
-
-        // Example: Block B
-        L.marker([3.1405, 101.6935]).addTo(map)
-            .bindPopup("<b>Block B</b><br>Faculty Offices");
-
-        // Example: Library
-        L.marker([3.1400, 101.6930]).addTo(map)
-            .bindPopup("<b>Main Library</b><br>Study Areas");
-
+        // Example Markers
+        L.marker([3.1412, 101.6925]).addTo(map).bindPopup("<b>Block A</b><br>Lecture Halls & Labs");
+        L.marker([3.1405, 101.6935]).addTo(map).bindPopup("<b>Block B</b><br>Faculty Offices");
+        L.marker([3.1400, 101.6930]).addTo(map).bindPopup("<b>Main Library</b><br>Study Areas");
     </script>
 </body>
 </html>

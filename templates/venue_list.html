@@ -9,27 +9,74 @@
     <style>
         /* RESET & BASE */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
+        
+        /* BODY BACKGROUND (Fintech Blue) */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
+            overflow: hidden; 
+        }
 
-        /* --- SIDEBAR --- */
-        .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
-        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: all 0.3s ease; text-decoration: none; position: relative; }
-        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
-        .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
-        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        /* --- UPDATED SIDEBAR (Glass Effect) --- */
+        .sidebar { 
+            width: 90px; 
+            /* Semi-transparent dark background */
+            background: rgba(0, 0, 0, 0.2); 
+            /* The blur effect */
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            /* Subtle border separator */
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            
+            display: flex; flex-direction: column; align-items: center; padding: 30px 0; z-index: 100; 
+        }
+
+        /* --- UPDATED ICONS FOR DARK MODE --- */
+        .sidebar-icon { 
+            width: 50px; height: 50px; border-radius: 14px; 
+            display: flex; justify-content: center; align-items: center; 
+            color: #94a3b8; /* Lighter gray for visibility */
+            font-size: 1.3rem; margin-bottom: 25px; 
+            transition: all 0.3s ease; text-decoration: none; position: relative; 
+        }
+        
+        /* Icon Hover: Light white overlay instead of blue */
+        .sidebar-icon:hover { 
+            background: rgba(255, 255, 255, 0.1); 
+            color: #ffffff; 
+            transform: translateY(-2px); 
+        }
+        
+        /* Active Icon: Keeps the gradient pop */
+        .sidebar-icon.active { 
+            background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); 
+            color: white; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Darker shadow */
+        }
+        
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } 
+        .sidebar-icon.logout:hover { background: rgba(255, 85, 85, 0.1); color: #ff6b6b; }
+
+        /* Sidebar Tooltip */
         .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 100; }
         .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
         /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
+        .main-content { 
+            flex: 1; 
+            padding: 50px; 
+            overflow-y: auto; 
+            background: transparent; 
+        }
 
         .header { margin-bottom: 40px; display: flex; flex-direction: column; gap: 20px; } 
         @media (min-width: 1100px) {
             .header { flex-direction: row; justify-content: space-between; align-items: flex-end; }
         }
 
-        .header-title h1 { font-size: 2.2rem; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
-        .header-title p { color: #64748b; margin-top: 5px; font-size: 1rem; }
+        .header-title h1 { font-size: 2.2rem; font-weight: 700; color: white; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header-title p { color: #e0e7ff; margin-top: 5px; font-size: 1rem; }
 
         /* --- SEARCH & FILTERS BAR --- */
         .search-container { display: flex; gap: 15px; width: 100%; max-width: 800px; }
@@ -37,23 +84,26 @@
         
         .search-input {
             width: 100%; padding: 15px 20px 15px 50px;
-            border: 2px solid #eef2f6; border-radius: 15px;
-            background: white; font-size: 0.95rem; color: #1e293b;
-            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 2px solid rgba(255,255,255,0.1); /* Subtle border */
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
+            font-size: 0.95rem; color: #1e293b;
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .search-input:focus { border-color: #4a6cf7; outline: none; box-shadow: 0 4px 20px rgba(74, 108, 247, 0.15); }
+        .search-input:focus { border-color: #4a6cf7; outline: none; box-shadow: 0 4px 20px rgba(74, 108, 247, 0.2); }
         .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; pointer-events: none; transition: 0.3s; }
         .search-input:focus + .search-icon { color: #4a6cf7; }
 
-        /* Filter Dropdowns */
         .filter-select {
             flex: 1; padding: 15px 20px;
-            border: 2px solid #eef2f6; border-radius: 15px;
-            background: white; font-size: 0.95rem; color: #1e293b;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            font-size: 0.95rem; color: #1e293b;
             cursor: pointer; transition: 0.3s; appearance: none;
             background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234a6cf7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
             background-repeat: no-repeat; background-position: right 1.2rem top 50%; background-size: 0.7rem auto;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); min-width: 140px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 140px;
         }
         .filter-select:focus { border-color: #4a6cf7; outline: none; }
         
@@ -69,12 +119,13 @@
 
         .venue-card {
             background: white; border-radius: 24px; padding: 30px; position: relative; overflow: visible; 
-            border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9; 
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column;
         }
-        .venue-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: transparent; }
+        .venue-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); border-color: transparent; }
 
-        /* --- INFO ICON (TOP RIGHT) --- */
+        /* INFO ICON */
         .info-icon {
             position: absolute; top: 20px; right: 20px;
             width: 32px; height: 32px; background: #f1f5f9; color: #64748b;
@@ -103,9 +154,9 @@
         .btn-book:hover { background: #4a6cf7; color: white; border-color: #4a6cf7; }
         .btn-book i { margin-left: 8px; font-size: 0.8rem; }
 
-        .no-results { grid-column: 1 / -1; text-align: center; padding: 60px; color: #94a3b8; font-size: 1.1rem; }
+        .no-results { grid-column: 1 / -1; text-align: center; padding: 60px; color: #e0e7ff; font-size: 1.1rem; }
 
-        /* --- MODAL (POPUP) STYLES --- */
+        /* --- MODAL STYLES --- */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 1000;
@@ -128,7 +179,6 @@
         .label { color: #64748b; font-weight: 500; }
         .value { color: #1e293b; font-weight: 600; text-align: right; max-width: 60%; }
 
-        /* Styling for the new tidy list */
         #m-equipment-container ul { list-style: none; padding: 0; margin: 0; }
         #m-equipment-container li { 
             display: flex; align-items: center; margin-bottom: 10px; 
@@ -251,28 +301,22 @@
             document.getElementById('m-location').innerText = location;
             document.getElementById('m-capacity').innerText = capacity + " People";
             
-            // --- SMART LIST GENERATOR ---
             const container = document.getElementById('m-equipment-container');
             let items = [];
 
             if (!equipment || equipment === 'None') {
                 items = ["Standard Equipment"];
             } else {
-                // 1. Try splitting by new line (Enter key)
                 items = equipment.split('\n');
-                
-                // 2. If it's just one line but has dashes, split by dashes instead
                 if (items.length <= 1 && equipment.includes('-')) {
                     items = equipment.split('-').map(item => item.trim()).filter(item => item.length > 0);
                 }
             }
 
-            // Build the HTML list
             let htmlList = '<ul>';
             items.forEach(item => {
                 let cleanItem = item.trim();
                 if (cleanItem.startsWith('-')) cleanItem = cleanItem.substring(1).trim();
-                
                 if (cleanItem.length > 0) {
                     htmlList += `<li><i class="fas fa-check-circle"></i> <span>${cleanItem}</span></li>`;
                 }

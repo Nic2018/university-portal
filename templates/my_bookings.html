@@ -9,47 +9,64 @@
     <style>
         /* RESET & BASE */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
+        
+        /* --- BODY BACKGROUND (Fintech Blue) --- */
+        body { 
+            display: flex; 
+            height: 100vh; 
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); 
+            overflow: hidden; 
+        }
 
-        /* --- SIDEBAR --- */
-        .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
-        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: 0.3s; text-decoration: none; position: relative; }
-        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
-        .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
-        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } 
-        .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        /* --- SIDEBAR (Glass Effect) --- */
+        .sidebar { 
+            width: 90px; 
+            background: rgba(0, 0, 0, 0.2); /* Dark Transparent */
+            backdrop-filter: blur(12px);    /* Blur Effect */
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; flex-direction: column; align-items: center; padding: 30px 0; z-index: 100; 
+        }
 
-        /* --- TOOLTIP (Black Box) CSS --- */
-        .sidebar-icon::after { 
-            content: attr(data-tooltip); 
-            position: absolute; 
-            left: 75px; top: 50%; 
-            transform: translateY(-50%) translateX(10px); 
-            background-color: #2d3436; 
+        /* --- ICONS (Light Mode for Dark Sidebar) --- */
+        .sidebar-icon { 
+            width: 50px; height: 50px; border-radius: 14px; 
+            display: flex; justify-content: center; align-items: center; 
+            color: #94a3b8; /* Light Gray */
+            font-size: 1.3rem; margin-bottom: 25px; 
+            transition: 0.3s; text-decoration: none; position: relative; 
+        }
+        
+        .sidebar-icon:hover { 
+            background: rgba(255, 255, 255, 0.1); 
+            color: #ffffff; 
+            transform: translateY(-2px); 
+        }
+        
+        .sidebar-icon.active { 
+            background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); 
             color: white; 
-            padding: 6px 14px; 
-            border-radius: 8px; 
-            font-size: 0.85rem; 
-            font-weight: 500; 
-            white-space: nowrap; 
-            opacity: 0; 
-            visibility: hidden; 
-            transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
-            pointer-events: none; 
-            z-index: 100; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); 
         }
-        .sidebar-icon:hover::after { 
-            opacity: 1; 
-            visibility: visible; 
-            transform: translateY(-50%) translateX(0); 
-        }
+        
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } 
+        .sidebar-icon.logout:hover { background: rgba(255, 85, 85, 0.1); color: #ff6b6b; }
+
+        /* TOOLTIP */
+        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; z-index: 100; }
+        .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
         /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
+        .main-content { 
+            flex: 1; 
+            padding: 50px; 
+            overflow-y: auto; 
+            background: transparent; 
+        }
 
-        .header h1 { font-size: 2.2rem; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
-        .header p { color: #64748b; margin-top: 5px; font-size: 1rem; }
+        /* Header Text updated to White */
+        .header h1 { font-size: 2.2rem; font-weight: 700; color: white; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header p { color: #e0e7ff; margin-top: 5px; font-size: 1rem; }
 
         /* GRID */
         .bookings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 40px; }
@@ -57,9 +74,10 @@
         /* CARD */
         .booking-card {
             background: white; border-radius: 24px; padding: 30px; border: 1px solid #f1f5f9;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); transition: 0.3s; display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.2);
+            transition: 0.3s; display: flex; flex-direction: column;
         }
-        .booking-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); }
+        .booking-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); }
 
         .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
         
@@ -121,22 +139,26 @@
             {% for booking in bookings %}
                 <div class="booking-card">
                     <div class="card-top">
-                        <div class="venue-icon"><i class="fas fa-calendar-check"></i></div>
-                        
-                        {% if booking.status == 'APPROVED' %}
-                            <span class="status-badge" style="background:#f0fdf4; color:#16a34a; border-color:#bbf7d0;">Approved</span>
-                        {% elif booking.status == 'REJECTED' %}
-                            <span class="status-badge" style="background:#fef2f2; color:#dc2626; border-color:#fecaca;">Rejected</span>
-                        {% else %}
-                            <span class="status-badge" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">Pending</span>
-                        {% endif %}
+                        <a href="{% url 'booking_detail' booking.id %}" style="text-decoration: none; color: inherit; display: contents;">
+                            <div class="venue-icon"><i class="fas fa-calendar-check"></i></div>
+                            
+                            {% if booking.status == 'APPROVED' %}
+                                <span class="status-badge" style="background:#f0fdf4; color:#16a34a; border-color:#bbf7d0;">Approved</span>
+                            {% elif booking.status == 'REJECTED' %}
+                                <span class="status-badge" style="background:#fef2f2; color:#dc2626; border-color:#fecaca;">Rejected</span>
+                            {% else %}
+                                <span class="status-badge" style="background:#fffbeb; color:#d97706; border-color:#fde68a;">Pending</span>
+                            {% endif %}
+                        </a>
                     </div>
 
-                    <div class="event-name">{{ booking.event_name }}</div>
-                    <div class="venue-name">{{ booking.venue.name }}</div>
+                    <a href="{% url 'booking_detail' booking.id %}" style="text-decoration: none; color: inherit;">
+                        <div class="event-name">{{ booking.event_name }}</div>
+                        <div class="venue-name">{{ booking.venue.name }}</div>
 
-                    <div class="info-row"><i class="far fa-calendar-alt"></i> {{ booking.start_time|date:"D, d M Y" }}</div>
-                    <div class="info-row"><i class="far fa-clock"></i> {{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</div>
+                        <div class="info-row"><i class="far fa-calendar-alt"></i> {{ booking.start_time|date:"D, d M Y" }}</div>
+                        <div class="info-row"><i class="far fa-clock"></i> {{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</div>
+                    </a>
 
                     <div class="card-footer">
                         <a href="{% url 'modify_booking' booking.id %}" class="btn-edit"><i class="fas fa-edit"></i> Edit</a>
