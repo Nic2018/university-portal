@@ -68,11 +68,20 @@
         .venue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
 
         .venue-card {
-            background: white; border-radius: 24px; padding: 30px; position: relative; overflow: hidden;
+            background: white; border-radius: 24px; padding: 30px; position: relative; overflow: visible; 
             border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column;
         }
         .venue-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: transparent; }
+
+        /* --- INFO ICON (TOP RIGHT) --- */
+        .info-icon {
+            position: absolute; top: 20px; right: 20px;
+            width: 32px; height: 32px; background: #f1f5f9; color: #64748b;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: none; transition: 0.2s; font-size: 0.9rem; z-index: 5;
+        }
+        .info-icon:hover { background: #4a6cf7; color: white; transform: scale(1.1); box-shadow: 0 5px 15px rgba(74, 108, 247, 0.3); }
 
         .venue-icon-box {
             width: 60px; height: 60px; border-radius: 18px; display: flex; justify-content: center; align-items: center;
@@ -81,7 +90,7 @@
         .venue-card:nth-child(2n) .venue-icon-box { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); color: #db2777; }
         .venue-card:nth-child(3n) .venue-icon-box { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #16a34a; }
 
-        .venue-name { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+        .venue-name { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; padding-right: 30px; }
         .venue-details { margin-bottom: 25px; list-style: none; }
         .venue-details li { display: flex; align-items: center; color: #64748b; font-size: 0.9rem; margin-bottom: 8px; }
         .venue-details li i { width: 25px; color: #94a3b8; }
@@ -95,6 +104,38 @@
         .btn-book i { margin-left: 8px; font-size: 0.8rem; }
 
         .no-results { grid-column: 1 / -1; text-align: center; padding: 60px; color: #94a3b8; font-size: 1.1rem; }
+
+        /* --- MODAL (POPUP) STYLES --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .modal-box {
+            background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 500px;
+            position: relative; animation: slideUp 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 1.2rem; color: #cbd5e1; cursor: pointer; transition: 0.2s; }
+        .modal-close:hover { color: #ef4444; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+        .modal-subtitle { color: #64748b; font-size: 0.95rem; margin-bottom: 25px; }
+        .modal-grid { background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        .modal-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; }
+        .modal-row:last-child { margin-bottom: 0; }
+        .label { color: #64748b; font-weight: 500; }
+        .value { color: #1e293b; font-weight: 600; text-align: right; max-width: 60%; }
+
+        /* Styling for the new tidy list */
+        #m-equipment-container ul { list-style: none; padding: 0; margin: 0; }
+        #m-equipment-container li { 
+            display: flex; align-items: center; margin-bottom: 10px; 
+            padding: 8px 12px; background: white; border-radius: 8px; border: 1px solid #f1f5f9; 
+        }
+        #m-equipment-container i { color: #4a6cf7; margin-right: 12px; font-size: 0.9rem; }
+        #m-equipment-container span { color: #334155; font-size: 0.95rem; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -148,12 +189,16 @@
         <div class="venue-grid">
             {% for venue in venues %}
                 <div class="venue-card">
+                    <button class="info-icon" onclick="openModal('{{ venue.name|escapejs }}', '{{ venue.location|escapejs }}', '{{ venue.capacity }}', '{{ venue.equipment|escapejs }}')">
+                        <i class="fas fa-info"></i>
+                    </button>
+
                     <div class="venue-icon-box"><i class="fas fa-building"></i></div>
                     <div class="venue-name">{{ venue.name }}</div>
                     <ul class="venue-details">
                         <li><i class="fas fa-map-pin"></i> {{ venue.location }}</li>
                         <li><i class="fas fa-users"></i> Capacity: {{ venue.capacity }} people</li>
-                        <li><i class="fas fa-wifi"></i> {{ venue.equipment|default:"Standard Equipment" }}</li>
+                        <li><i class="fas fa-desktop"></i> Standard Equipment</li>
                     </ul>
                     
                     <a href="{% url 'create_booking' %}?venue={{ venue.id }}" class="btn-book">
@@ -170,5 +215,79 @@
             {% endfor %}
         </div>
     </div>
+
+    <div id="venueModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box">
+            <i class="fas fa-times modal-close" onclick="closeModal(event, true)"></i>
+            
+            <h2 class="modal-title" id="m-name">Venue Name</h2>
+            <p class="modal-subtitle">Full Venue Details</p>
+
+            <div class="modal-grid">
+                <div class="modal-row">
+                    <span class="label">Location</span>
+                    <span class="value" id="m-location">Block A</span>
+                </div>
+                <div class="modal-row">
+                    <span class="label">Capacity</span>
+                    <span class="value" id="m-capacity">30 People</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <span class="label" style="display:block; margin-bottom:8px;">Equipment / Amenities</span>
+                
+                <div id="m-equipment-container" style="background: #f8fafc; padding: 15px; border-radius: 12px;">
+                </div>
+            </div>
+
+            <button onclick="closeModal(event, true)" style="width:100%; padding:14px; background:#4a6cf7; color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function openModal(name, location, capacity, equipment) {
+            document.getElementById('m-name').innerText = name;
+            document.getElementById('m-location').innerText = location;
+            document.getElementById('m-capacity').innerText = capacity + " People";
+            
+            // --- SMART LIST GENERATOR ---
+            const container = document.getElementById('m-equipment-container');
+            let items = [];
+
+            if (!equipment || equipment === 'None') {
+                items = ["Standard Equipment"];
+            } else {
+                // 1. Try splitting by new line (Enter key)
+                items = equipment.split('\n');
+                
+                // 2. If it's just one line but has dashes, split by dashes instead
+                if (items.length <= 1 && equipment.includes('-')) {
+                    items = equipment.split('-').map(item => item.trim()).filter(item => item.length > 0);
+                }
+            }
+
+            // Build the HTML list
+            let htmlList = '<ul>';
+            items.forEach(item => {
+                let cleanItem = item.trim();
+                if (cleanItem.startsWith('-')) cleanItem = cleanItem.substring(1).trim();
+                
+                if (cleanItem.length > 0) {
+                    htmlList += `<li><i class="fas fa-check-circle"></i> <span>${cleanItem}</span></li>`;
+                }
+            });
+            htmlList += '</ul>';
+
+            container.innerHTML = htmlList;
+            document.getElementById('venueModal').style.display = 'flex';
+        }
+
+        function closeModal(event, force) {
+            if (event.target.id === 'venueModal' || force) {
+                document.getElementById('venueModal').style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>

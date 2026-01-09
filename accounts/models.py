@@ -45,6 +45,9 @@ class Booking(models.Model):
     # Stores the status (Default is 'PENDING')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # NEW: Additional Equipment Requests
+    addon_equipment = models.TextField(blank=True, null=True, help_text="List any extra equipment needed (e.g., Extra Mic, Extension Cord).")
 
     def __str__(self):
         return f"{self.event_name} - {self.status}"
