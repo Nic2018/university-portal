@@ -2,58 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Dashboard</title>
+    <title>Dashboard - Campus Booking</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
     <style>
+        /* RESET & BASE */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
+        /* SIDEBAR */
         .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
-        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: 0.3s; text-decoration: none; position: relative; }
+        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: all 0.3s ease; text-decoration: none; position: relative; }
         .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
         .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
-        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } 
-        .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
-
-        /* Tooltip */
-        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; z-index: 100; }
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 100; }
         .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
-        /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
+        /* MAIN CONTENT */
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
 
-        .header h1 { font-size: 2.2rem; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
-        .header p { color: #64748b; margin-top: 5px; font-size: 1rem; }
+        /* WELCOME HEADER */
+        .header { margin-bottom: 30px; }
+        .header h1 { font-size: 2rem; font-weight: 700; color: #1e293b; }
+        .header p { color: #64748b; font-size: 1rem; margin-top: 5px; }
 
-        /* --- ALERT MESSAGES (THE FIX) --- */
-        .alert-success { 
-            background: #f0fdf4; color: #16a34a; padding: 16px; border-radius: 12px; 
-            margin-bottom: 30px; border-left: 5px solid #16a34a; 
-            box-shadow: 0 5px 15px rgba(22, 163, 74, 0.1); 
+        /* ACTION CARDS (Find, Book, Check) */
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        
+        .action-card {
+            background: white; border-radius: 20px; padding: 25px; display: flex; align-items: center; gap: 20px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); text-decoration: none; transition: 0.3s; border: 1px solid #f1f5f9;
+        }
+        .action-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: transparent; }
+
+        .icon-box { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .icon-blue { background: #e0f2fe; color: #0284c7; }
+        .icon-purple { background: #f3e8ff; color: #9333ea; }
+        .icon-green { background: #dcfce7; color: #16a34a; }
+
+        .card-info h3 { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+        .card-info span { color: #64748b; font-size: 0.85rem; font-weight: 500; }
+
+        /* --- 2. NEW MAP SECTION --- */
+        .map-section {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9;
+            height: 500px; /* Adjust height as needed */
+            display: flex;
+            flex-direction: column;
         }
         
-        .alert-error { 
-            background: #fef2f2; color: #dc2626; padding: 16px; border-radius: 12px; 
-            margin-bottom: 30px; border-left: 5px solid #dc2626; 
-            box-shadow: 0 5px 15px rgba(220, 38, 38, 0.1); 
+        .map-header { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .map-header h3 { font-size: 1.2rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        
+        #campus-map {
+            flex: 1; /* Fills remaining height */
+            width: 100%;
+            border-radius: 16px;
+            z-index: 1; /* Ensure it sits below sidebar tooltips */
         }
-
-        /* --- DASHBOARD CARDS --- */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px; margin-top: 40px; }
-        
-        .stat-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); transition: 0.3s; display: flex; align-items: center; gap: 20px; border: 1px solid #f1f5f9; text-decoration: none; color: inherit; }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: transparent; }
-        
-        .stat-icon { width: 60px; height: 60px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
-        .stat-info h3 { font-size: 2rem; font-weight: 700; color: #1e293b; }
-        .stat-info p { color: #64748b; font-size: 0.9rem; margin-top: 2px; }
-
-        .icon-blue { background: #eff6ff; color: #3b82f6; }
-        .icon-purple { background: #f5f3ff; color: #8b5cf6; }
-        .icon-green { background: #f0fdf4; color: #22c55e; }
     </style>
 </head>
 <body>
@@ -63,7 +77,7 @@
         <a href="{% url 'my_bookings' %}" class="sidebar-icon" data-tooltip="My Bookings"><i class="fas fa-list-ul"></i></a>
         <a href="{% url 'calendar' %}" class="sidebar-icon" data-tooltip="View Schedule"><i class="fas fa-calendar-alt"></i></a>
         <a href="{% url 'venue_list' %}" class="sidebar-icon" data-tooltip="Campus Venues"><i class="fas fa-map-marker-alt"></i></a>
-        <a href="{% url 'create_booking' %}" class="sidebar-icon" data-tooltip="Book a Venue"><i class="fas fa-plus"></i></a>
+        <a href="{% url 'create_booking' %}" class="sidebar-icon" data-tooltip="Book a Room"><i class="fas fa-plus"></i></a>
         <a href="{% url 'profile' %}" class="sidebar-icon" data-tooltip="Settings"><i class="fas fa-user-cog"></i></a>
         {% if user.username == 'guest' %}
             <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Register Now"><i class="fas fa-user-plus"></i></a>
@@ -73,44 +87,80 @@
     </div>
 
     <div class="main-content">
+        
         <div class="header">
-            <h1>Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
-            <p>Here's what's happening with your campus bookings.</p>
+            {% if user.username == 'guest' %}
+                <h1>Welcome, Guest! 👋</h1>
+                <p>Register an account to start booking venues.</p>
+            {% else %}
+                <h1>Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
+                <p>Here's what's happening with your campus bookings.</p>
+            {% endif %}
         </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="stats-grid">
-            <a href="{% url 'venue_list' %}" class="stat-card">
-                <div class="stat-icon icon-blue"><i class="fas fa-search"></i></div>
-                <div class="stat-info">
+        <div class="action-grid">
+            <a href="{% url 'venue_list' %}" class="action-card">
+                <div class="icon-box icon-blue"><i class="fas fa-search"></i></div>
+                <div class="card-info">
                     <h3>Find</h3>
-                    <p>Search Venues</p>
+                    <span>Search Venues</span>
                 </div>
             </a>
-
-            <a href="{% url 'create_booking' %}" class="stat-card">
-                <div class="stat-icon icon-purple"><i class="fas fa-plus-circle"></i></div>
-                <div class="stat-info">
+            <a href="{% url 'create_booking' %}" class="action-card">
+                <div class="icon-box icon-purple"><i class="fas fa-plus"></i></div>
+                <div class="card-info">
                     <h3>Book</h3>
-                    <p>New Reservation</p>
+                    <span>New Reservation</span>
                 </div>
             </a>
-
-            <a href="{% url 'my_bookings' %}" class="stat-card">
-                <div class="stat-icon icon-green"><i class="fas fa-calendar-check"></i></div>
-                <div class="stat-info">
+            <a href="{% url 'my_bookings' %}" class="action-card">
+                <div class="icon-box icon-green"><i class="fas fa-calendar-check"></i></div>
+                <div class="card-info">
                     <h3>Check</h3>
-                    <p>My Status</p>
+                    <span>My Status</span>
                 </div>
             </a>
         </div>
+
+        <div class="map-section">
+            <div class="map-header">
+                <h3><i class="fas fa-map-marked-alt" style="color: #4a6cf7;"></i> Campus Map</h3>
+                <span style="color: #64748b; font-size: 0.9rem;">Live View</span>
+            </div>
+            <div id="campus-map"></div>
+        </div>
+
     </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // --- MAP INITIALIZATION ---
+        // 1. Create the map and set default view (Coords: Latitude, Longitude, Zoom Level)
+        // You can change [3.140853, 101.693207] to your actual University coordinates
+        var map = L.map('campus-map').setView([3.140853, 101.693207], 16);
+
+        // 2. Add the Tile Layer (The visual map images)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3. Add Custom Markers (Pins)
+        // Format: L.marker([lat, long]).addTo(map).bindPopup("Message");
+
+        // Example: Block A
+        L.marker([3.1412, 101.6925]).addTo(map)
+            .bindPopup("<b>Block A</b><br>Lecture Halls & Labs")
+            .openPopup();
+
+        // Example: Block B
+        L.marker([3.1405, 101.6935]).addTo(map)
+            .bindPopup("<b>Block B</b><br>Faculty Offices");
+
+        // Example: Library
+        L.marker([3.1400, 101.6930]).addTo(map)
+            .bindPopup("<b>Main Library</b><br>Study Areas");
+
+    </script>
 </body>
 </html>
