@@ -25,4 +25,7 @@ urlpatterns = [
     path('delete_booking/<int:booking_id>/', views.delete_booking_view, name='delete_booking'),
     path('profile/', views.profile_view, name='profile'),
     path('check_availability/', views.check_availability, name='check_availability'),
+    
+    #--- AI Chat Integration ---
+    path('ai-chat/', views.ai_chat_response, name='ai_chat'),
 ]

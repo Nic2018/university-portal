@@ -8,6 +8,10 @@ from django.db.models import Q
 from datetime import datetime, date, timedelta
 from django.utils.safestring import mark_safe
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+import json
+import re  # Importing regex for smarter matching
 
 from .models import Venue, Booking
 from .forms import BookingForm, VenueSearchForm
@@ -104,7 +108,6 @@ def create_booking_view(request):
             booking.user = request.user 
             
             # --- AUTO-FILL LOGIC ---
-            # If purpose is 'STUDY', auto-set the name so user doesn't have to type it
             if booking.purpose == 'STUDY':
                 booking.event_name = "Study Session"
 
@@ -117,10 +120,8 @@ def create_booking_view(request):
             )
 
             if clashing_bookings.exists():
-                # CLASH FOUND! -> ERROR ONLY (DO NOT SAVE)
                 messages.error(request, "⚠️ Booking Failed! That time slot is already taken.")
             else:
-                # NO CLASH -> SUCCESS
                 booking.status = 'PENDING'
                 booking.save()
                 messages.success(request, "Booking request submitted successfully!")
@@ -130,16 +131,14 @@ def create_booking_view(request):
         # --- GET REQUEST (Page Load) ---
         initial_data = {}
         
-        # 1. Check if a Venue ID was passed (from "Book This Venue" button)
+        # Check if a Venue ID was passed
         venue_id = request.GET.get('venue')
         if venue_id:
             initial_data['venue'] = venue_id
             
-        # 2. Check if a Date was passed (from Calendar click)
-        # This is the fix you needed!
+        # Check if a Date was passed
         date_param = request.GET.get('date') 
         if date_param:
-            # Pre-fill Start/End time with the clicked date
             initial_data['start_time'] = f"{date_param} 09:00"
             initial_data['end_time'] = f"{date_param} 22:00"
 
@@ -157,7 +156,6 @@ def booking_detail_view(request, booking_id):
 def modify_booking_view(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
     if request.method == 'POST':
-        # Also need request.FILES here in case they update the document
         form = BookingForm(request.POST, request.FILES, instance=booking)
         if form.is_valid():
             form.save()
@@ -248,3 +246,87 @@ def check_availability(request):
             return JsonResponse({'status': 'available'})
 
     return JsonResponse({'status': 'error'})
+
+# ==========================================
+# 🤖 CAMPUS-BOT AI LOGIC
+# ==========================================
+
+@csrf_exempt
+def ai_chat_response(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_message = data.get('message', '').lower()
+            
+            print(f"User Message: {user_message}") 
+
+            # ---------------------------------------------------------
+            # 1. GREETINGS
+            # ---------------------------------------------------------
+            if any(word in user_message for word in ['hello', 'hi', 'hey', 'greetings']):
+                return JsonResponse({'response': "Hello! 👋 I am CampusBot. Type a venue name (e.g., 'CQAR0001') to check its status."})
+
+            # ---------------------------------------------------------
+            # 2. RECOMMENDATION (By Capacity)
+            # ---------------------------------------------------------
+            if any(word in user_message for word in ['people', 'capacity', 'pax', 'fit']):
+                import re
+                numbers = re.findall(r'\d+', user_message)
+                if numbers:
+                    required_pax = int(numbers[0])
+                    options = Venue.objects.filter(capacity__gte=required_pax).order_by('capacity')
+                    
+                    if options.exists():
+                        names = ", ".join([f"{v.name} ({v.capacity})" for v in options[:2]])
+                        return JsonResponse({'response': f"💡 I recommend: {names}."})
+                    else:
+                        return JsonResponse({'response': f"⚠️ No single room can fit {required_pax} people."})
+                else:
+                    return JsonResponse({'response': "How many people? (e.g., 'Room for 30 people')"})
+
+            # ---------------------------------------------------------
+            # 3. DIRECT VENUE CHECK (The Fix!)
+            # ---------------------------------------------------------
+            # We look for a venue name match FIRST, before checking for "availability" keywords.
+            venues = Venue.objects.all()
+            found_venue = None
+            
+            for v in venues:
+                # Check if the exact venue name (or a significant part) is in the message
+                # e.g., if user types "CQAR0001", this will match.
+                if v.name.lower() in user_message:
+                    found_venue = v
+                    break
+            
+            if found_venue:
+                now = timezone.now()
+                is_booked = Booking.objects.filter(
+                    venue=found_venue, 
+                    start_time__lte=now, 
+                    end_time__gte=now,
+                    status='APPROVED'
+                ).exists()
+                
+                if is_booked:
+                    return JsonResponse({'response': f"🚫 {found_venue.name} is currently BOOKED."})
+                else:
+                    return JsonResponse({'response': f"✅ {found_venue.name} is AVAILABLE right now!"})
+
+            # ---------------------------------------------------------
+            # 4. KEYWORD FALLBACK
+            # ---------------------------------------------------------
+            # If user asked "is it free?" but we couldn't find a venue name above
+            if any(word in user_message for word in ['available', 'free', 'open', 'status', 'booked', 'check']):
+                names = ", ".join([v.name for v in venues[:3]])
+                return JsonResponse({'response': f"Which venue? Try naming one specifically, like: {names}..."})
+
+            # ---------------------------------------------------------
+            # 5. FINAL FALLBACK
+            # ---------------------------------------------------------
+            return JsonResponse({'response': "I didn't catch that. Try typing a venue name like 'CQAR0001' directly."})
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return JsonResponse({'response': "⚠️ My brain hit a snag. Please try again."})
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
