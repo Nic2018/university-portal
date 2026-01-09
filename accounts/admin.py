@@ -1,16 +1,43 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.core.mail import send_mail  # <--- NEW IMPORT
-from django.conf import settings        # <--- NEW IMPORT
+from django.utils.safestring import mark_safe
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
 from .models import Venue, Booking
 
-# Manage Venues
+# ==========================================
+# MANAGE VENUES
+# ==========================================
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
-    list_display = ('name', 'location', 'capacity', 'equipment') 
+    list_display = ('name', 'location', 'capacity', 'equipment', 'venue_status') 
     search_fields = ('name', 'location') 
 
-# Manage Bookings
+    # --- REAL-TIME AVAILABILITY CHECK ---
+    @admin.display(description='Current Status')
+    def venue_status(self, obj):
+        try:
+            now = timezone.now()
+            
+            # Check for bookings happening RIGHT NOW
+            is_busy = Booking.objects.filter(
+                venue=obj,
+                status='APPROVED',
+                start_time__lte=now,
+                end_time__gte=now
+            ).exists()
+
+            if is_busy:
+                return mark_safe('<span style="color: red; font-weight: bold;">🔴 Booked</span>')
+            else:
+                return mark_safe('<span style="color: green; font-weight: bold;">🟢 Available</span>')
+        except Exception:
+            return mark_safe('<span style="color: gray;">⚠️ Error</span>')
+
+# ==========================================
+# MANAGE BOOKINGS
+# ==========================================
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     list_display = ('event_name', 'user', 'venue', 'start_time', 'colored_status', 'purpose', 'document')
@@ -45,20 +72,18 @@ class BookingAdmin(admin.ModelAdmin):
             color, icon, obj.get_status_display()
         )
 
-    # --- UPDATED ACTION: APPROVE & SEND EMAIL ---
+    # --- ACTION 1: APPROVE & SEND EMAIL ---
     @admin.action(description='Mark selected bookings as APPROVED')
     def approve_bookings(self, request, queryset):
-        # 1. Update status in Database
         updated_count = queryset.update(status='APPROVED')
         
-        # 2. Loop through and send emails
         for booking in queryset:
-            if booking.user.email: # Check if user has an email
+            if booking.user.email:
                 subject = f"Booking Approved: {booking.event_name} ✅"
                 message = f"""
                 Hi {booking.user.first_name},
 
-                Good news! Your booking request has been APPROVED by the admin.
+                Good news! Your booking request has been APPROVED.
 
                 Event: {booking.event_name}
                 Venue: {booking.venue.name}
@@ -66,21 +91,36 @@ class BookingAdmin(admin.ModelAdmin):
                 
                 Please arrive on time.
                 """
-                
                 try:
-                    send_mail(
-                        subject,
-                        message,
-                        'admin@university.com', # From Email
-                        [booking.user.email],   # To Email
-                        fail_silently=True,
-                    )
-                except Exception as e:
-                    print(f"Error sending email: {e}")
+                    send_mail(subject, message, 'admin@university.com', [booking.user.email], fail_silently=True)
+                except:
+                    pass
 
-        self.message_user(request, f"{updated_count} bookings marked as APPROVED & notification emails sent.")
+        self.message_user(request, f"{updated_count} bookings marked as APPROVED & emails sent.")
 
+    # --- ACTION 2: REJECT & SEND EMAIL (UPDATED) ---
     @admin.action(description='Mark selected bookings as REJECTED')
     def reject_bookings(self, request, queryset):
         updated_count = queryset.update(status='REJECTED')
-        self.message_user(request, f"{updated_count} bookings were marked as REJECTED.")
+        
+        # Now we loop through rejected bookings to send the notification
+        for booking in queryset:
+            if booking.user.email:
+                subject = f"Booking Update: {booking.event_name} ❌"
+                message = f"""
+                Hi {booking.user.first_name},
+
+                We regret to inform you that your booking request has been REJECTED.
+
+                Event: {booking.event_name}
+                Venue: {booking.venue.name}
+                Time: {booking.start_time.strftime('%Y-%m-%d %H:%M')}
+                
+                Please contact the admin for more details or try booking a different slot.
+                """
+                try:
+                    send_mail(subject, message, 'admin@university.com', [booking.user.email], fail_silently=True)
+                except:
+                    pass
+
+        self.message_user(request, f"{updated_count} bookings marked as REJECTED & emails sent.")
