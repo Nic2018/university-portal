@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from calendar import HTMLCalendar
 from .models import Booking
 
@@ -7,52 +8,60 @@ class Calendar(HTMLCalendar):
         self.month = month
         super(Calendar, self).__init__()
 
-    def formatday(self, day, bookings):
-        # 1. Get events for this day
-        events_per_day = bookings.filter(
-            start_time__year=day.year,
-            start_time__month=day.month,
-            start_time__day=day.day
-        )
-        
+    # 1. Format each day
+    def formatday(self, day, weekday):
+        # Filter events for this day (Approved/Pending only)
+        bookings = Booking.objects.filter(
+            start_time__year=self.year, 
+            start_time__month=self.month, 
+            start_time__day=day
+        ).exclude(status='REJECTED')
+
+        # --- NEW: GENERATE DATE STRING (YYYY-MM-DD) ---
+        # We need this to pass to the URL so the form knows which date to pick
+        current_date = f"{self.year}-{self.month:02d}-{day:02d}"
+        create_url = f"/create_booking/?date={current_date}"
+
         d = ''
-        for event in events_per_day:
+        for event in bookings:
+            # Yellow clickable event box
             d += f'''
-            <div class="event-box"> 
-                <span class="event-time">{event.start_time.strftime("%I:%M%p").lstrip("0").lower()}</span>
-                <span class="event-title">{event.event_name}</span>
-            </div>
+                <a href="/booking_detail/{event.id}/" style="text-decoration: none; display: block;">
+                    <div class="calendar-event">
+                        <span class="event-time">{event.start_time.strftime("%H:%M")}</span>
+                        <span class="event-title">{event.event_name}</span>
+                    </div>
+                </a>
             '''
 
-        # 2. Prepare the date string for the URL (e.g., "2026-01-15")
-        date_str = day.strftime('%Y-%m-%d')
+        if day != 0:
+            # --- THE FIX IS HERE ---
+            # We wrap the day number {day} in a link to create_url
+            # We also add a small "+" icon to make it obvious
+            day_html = f'''
+                <div class="day-header">
+                    <a href="{create_url}" class="date-btn" title="Add Booking">
+                        {day} <i class="fas fa-plus-circle add-icon"></i>
+                    </a>
+                </div>
+            '''
+            return f"<td>{day_html}<div class='day-events'>{d}</div></td>"
         
-        # 3. Create the Clickable Attributes
-        # We add 'onclick' to send the user to the booking page with the date
-        click_action = f"onclick=\"window.location.href='/book/?date={date_str}'\""
-        style = "style='cursor: pointer; position: relative;'"
+        return '<td></td>'
 
-        # 4. Render the Cell
-        # If it's a day from another month, we add the 'other-month' class but keep it clickable
-        if day.month != self.month:
-            return f"<td class='other-month' {click_action} {style}><span class='date'>{day.day}</span><ul> {d} </ul></td>"
-        
-        # Standard day
-        return f"<td {click_action} {style}><span class='date'>{day.day}</span><ul> {d} </ul></td>"
-
-    def formatweek(self, theweek, bookings):
+    # 2. Format a week
+    def formatweek(self, theweek):
         week = ''
-        for day in theweek:
-            week += self.formatday(day, bookings)
+        for d, weekday in theweek:
+            week += self.formatday(d, weekday)
         return f'<tr> {week} </tr>'
 
+    # 3. Format the month
     def formatmonth(self, withyear=True):
-        bookings = Booking.objects.all()
-
         cal = f'<table border="0" cellpadding="0" cellspacing="0" class="calendar">\n'
         cal += f'{self.formatmonthname(self.year, self.month, withyear=withyear)}\n'
-        cal += f'{self.formatweekheader()}\n'
-        for week in self.monthdatescalendar(self.year, self.month):
-            cal += self.formatweek(week, bookings)
+        cal += f'<tr class="week-headers"><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>\n'
+        for week in self.monthdays2calendar(self.year, self.month):
+            cal += f'{self.formatweek(week)}\n'
         cal += '</table>'
         return cal

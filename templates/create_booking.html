@@ -5,164 +5,186 @@
     <title>New Booking</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
+        /* ... Keep your existing CSS ... */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
         .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 10; }
-        
-        .sidebar-icon {
-            width: 50px; height: 50px; border-radius: 12px;
-            display: flex; justify-content: center; align-items: center;
-            color: #999; font-size: 1.2rem; margin-bottom: 25px; transition: 0.3s;
-            text-decoration: none; position: relative;
-        }
-        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; }
-        .sidebar-icon.active { background: #4a6cf7; color: white; box-shadow: 0 10px 20px rgba(74, 108, 247, 0.3); }
-        .sidebar-icon.logout { margin-top: auto; color: #ff5b5b; }
-
-        /* Custom Tooltip */
-        .sidebar-icon::after {
-            content: attr(data-tooltip); position: absolute; left: 70px; top: 50%;
-            transform: translateY(-50%) translateX(10px); background-color: #222; color: white;
-            padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; white-space: nowrap;
-            opacity: 0; visibility: hidden; transition: 0.2s ease-in-out; pointer-events: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100;
-        }
+        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; text-decoration: none; position: relative; transition: all 0.3s ease; }
+        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
+        .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 100; }
         .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
 
-        /* --- MAIN CONTENT --- */
         .main-content { flex: 1; padding: 40px; display: flex; justify-content: center; align-items: flex-start; overflow-y: auto; }
-
-        .form-container { 
-            background: white; width: 100%; max-width: 600px; padding: 50px; 
-            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 20px;
-        }
+        .form-container { background: white; width: 100%; max-width: 600px; padding: 50px; border-radius: 24px; margin-top: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+        
         .form-header { margin-bottom: 30px; text-align: center; }
         .form-header h2 { font-size: 1.8rem; font-weight: 700; color: #1a1a1a; }
         .form-header p { color: #888; margin-top: 5px; font-size: 0.95rem; }
-
+        
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: 500; margin-bottom: 8px; color: #444; font-size: 0.9rem; }
         
-        /* Inputs */
-        input, select, textarea {
-            width: 100%; padding: 14px 18px; border: 2px solid #f0f0f0; border-radius: 12px;
-            font-size: 0.95rem; background: #fafafa; transition: 0.3s; color: #333; font-family: 'Poppins', sans-serif;
-        }
-        input:focus, select:focus, textarea:focus { border-color: #4a6cf7; background: #fff; outline: none; box-shadow: 0 4px 10px rgba(74, 108, 247, 0.1); }
-        
-        input.datetime-picker { cursor: pointer; background-color: #fff; }
-
+        input, textarea, select { width: 100%; padding: 14px 18px; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 0.95rem; background: #fafafa; transition: 0.3s; color: #333; font-family: 'Poppins', sans-serif; }
+        input:focus, textarea:focus, select:focus { border-color: #4a6cf7; background: #fff; outline: none; }
         textarea { height: 100px; resize: none; }
-        select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 1rem top 50%; background-size: 0.65rem auto; }
-
-        .btn-submit {
-            width: 100%; padding: 16px; background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%);
-            color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; 
-            cursor: pointer; box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2); transition: 0.3s; margin-top: 10px;
-        }
-        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3); }
-
-        /* Calendar Styles */
-        .flatpickr-calendar { border-radius: 12px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; border: none !important; }
-        .flatpickr-day.selected { background: #4a6cf7 !important; border-color: #4a6cf7 !important; }
         
-        /* Make sure all dates (even past ones) are visible for the assignment */
-        .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
-            color: #ccc !important; 
-            opacity: 1 !important;
-        }
+        .btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3); }
+        .btn-submit:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Select2 Styles */
+        .select2-container .select2-selection--single { height: 52px !important; padding: 10px 15px !important; border: 2px solid #f0f0f0 !important; border-radius: 12px !important; background-color: #fafafa !important; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 50px !important; right: 15px !important; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px !important; color: #333 !important; font-size: 0.95rem; }
+
+        /* Status Messages */
+        #availability-status { font-size: 0.9rem; font-weight: 600; margin-top: 5px; min-height: 24px; display: flex; align-items: center; gap: 8px; }
+        .status-available { color: #16a34a; }
+        .status-taken { color: #dc2626; }
+        .status-checking { color: #64748b; }
+
+        /* HIDE ELEMENTS BY DEFAULT */
+        .hidden-field { display: none; }
     </style>
 </head>
 <body>
+
     <div class="sidebar">
         <a href="{% url 'dashboard' %}" class="sidebar-icon" data-tooltip="Dashboard"><i class="fas fa-home"></i></a>
         <a href="{% url 'my_bookings' %}" class="sidebar-icon" data-tooltip="My Bookings"><i class="fas fa-list-ul"></i></a>
         <a href="{% url 'calendar' %}" class="sidebar-icon" data-tooltip="View Schedule"><i class="fas fa-calendar-alt"></i></a>
         <a href="{% url 'venue_list' %}" class="sidebar-icon" data-tooltip="Campus Venues"><i class="fas fa-map-marker-alt"></i></a>
-        
-        <a href="#" class="sidebar-icon active" data-tooltip="Book a Room"><i class="fas fa-plus"></i></a>
-        
+        <a href="#" class="sidebar-icon active" data-tooltip="Book a Venue"><i class="fas fa-plus"></i></a>
         <a href="{% url 'profile' %}" class="sidebar-icon" data-tooltip="Settings"><i class="fas fa-user-cog"></i></a>
-        
         <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Log Out"><i class="fas fa-sign-out-alt"></i></a>
     </div>
 
     <div class="main-content">
         <div class="form-container">
             <div class="form-header">
-                <h2>Book a Room</h2>
+                <h2>Book a Venue</h2>
                 <p>Reserve a space for your next event.</p>
             </div>
             
-            <form method="post">
+            <form method="post" id="bookingForm" enctype="multipart/form-data">
                 {% csrf_token %}
-                <div class="form-group"><label>Venue</label>{{ form.venue }}</div>
-                <div class="form-group"><label>Event Name</label>{{ form.event_name }}</div>
-                <div class="form-group"><label>Description</label>{{ form.description }}</div>
                 
+                <div class="form-group">
+                    <label>Booking Purpose</label>
+                    <select name="purpose" id="id_purpose" class="form-control" style="height: 52px;">
+                        <option value="STUDY">Study Session</option>
+                        <option value="EVENT">Event / Activity</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden-field" id="event-name-group">
+                    <label>Event Name</label>
+                    {{ form.event_name }}
+                </div>
+
+                <div class="form-group">
+                    <label>Venue</label>
+                    {{ form.venue }}
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    {{ form.description }}
+                </div>
+                
+                <div class="form-group hidden-field" id="document-group">
+                    <label>Upload Document (Optional)</label>
+                    {{ form.document }}
+                </div>
+
                 <div class="form-group" style="display: flex; gap: 20px;">
                     <div style="flex: 1;">
                         <label>Start Time</label>
-                        <input type="text" name="start_time" class="datetime-picker" placeholder="Select Date & Time" required>
+                        <input type="text" id="id_start_time" name="start_time" class="datetime-picker" placeholder="Select Date & Time" value="{{ form.start_time.value|default:'' }}" required>
                     </div>
                     <div style="flex: 1;">
                         <label>End Time</label>
-                        <input type="text" name="end_time" class="datetime-picker" placeholder="Select Date & Time" required>
+                        <input type="text" id="id_end_time" name="end_time" class="datetime-picker" placeholder="Select Date & Time" value="{{ form.end_time.value|default:'' }}" required>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <div id="availability-status"></div>
+                </div>
                 
-                <button type="submit" class="btn-submit">Confirm Booking</button>
+                <button type="submit" id="submitBtn" class="btn-submit">Confirm Booking</button>
             </form>
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        $(document).ready(function() {
+            // 1. Initialize Select2
+            $('#id_venue').select2({ width: '100%', placeholder: "Select a Venue...", allowClear: true });
+
+            // 2. Date Picker
+            let baseConfig = { enableTime: true, dateFormat: "Y-m-d H:i", time_24hr: true, onClose: function() { checkAvailability(); } };
+            flatpickr("#id_start_time", baseConfig);
+            flatpickr("#id_end_time", baseConfig);
+
+            // 3. TOGGLE EVENT FIELDS LOGIC
+            // Run on load and on change
+            function toggleFields() {
+                var purpose = $('#id_purpose').val();
+                if (purpose === 'EVENT') {
+                    $('#event-name-group').slideDown();
+                    $('#document-group').slideDown();
+                    // Make event name required via JS if it's visible? Optional based on your requirement.
+                } else {
+                    $('#event-name-group').slideUp();
+                    $('#document-group').slideUp();
+                }
+            }
+
+            // Bind the toggle function
+            $('#id_purpose').change(toggleFields);
+            toggleFields(); // Run once on load to set initial state
+
+            // 4. Availability Check
+            $('#id_venue').on('change', checkAvailability);
             
-            // 1. Get the 'date' from the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const dateParam = urlParams.get('date');
+            function checkAvailability() {
+                const venue = $('#id_venue').val();
+                const start = $('#id_start_time').val();
+                const end = $('#id_end_time').val();
+                const statusDiv = $('#availability-status');
+                const btn = $('#submitBtn');
 
-            // 2. Define Base Settings (Shared settings)
-            let baseConfig = {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i",
-                time_24hr: true
-                // Note: minDate is removed so you can pick any date for assignment testing
-            };
+                if (venue && start && end) {
+                    statusDiv.html('<span class="status-checking"><i class="fas fa-spinner fa-spin"></i> Checking availability...</span>');
+                    btn.prop('disabled', true);
 
-            // 3. Configure START TIME -> Defaults to 09:00
-            let startConfig = Object.assign({}, baseConfig); // Copy settings
-            if (dateParam) {
-                startConfig.defaultDate = dateParam + " 09:00";
-            }
-            // Apply only to the start_time input
-            flatpickr("input[name='start_time']", startConfig);
-
-            // 4. Configure END TIME -> Defaults to 22:00
-            let endConfig = Object.assign({}, baseConfig); // Copy settings
-            if (dateParam) {
-                endConfig.defaultDate = dateParam + " 22:00";
-            }
-            // Apply only to the end_time input
-            flatpickr("input[name='end_time']", endConfig);
-
-            // 5. Fix the Dropdown
-            let venueSelect = document.querySelector("select[name='venue']");
-            if (venueSelect) {
-                for (let option of venueSelect.options) {
-                    if (option.text.includes("---")) {
-                        option.text = "Select a Venue...";
-                        option.disabled = true;
-                    }
+                    $.ajax({
+                        url: "{% url 'check_availability' %}",
+                        data: { 'venue_id': venue, 'start_time': start, 'end_time': end },
+                        dataType: 'json',
+                        success: function (data) {
+                            if (data.status === 'available') {
+                                statusDiv.html('<span class="status-available"><i class="fas fa-check-circle"></i> Venue is Available!</span>');
+                                btn.prop('disabled', false);
+                            } else {
+                                statusDiv.html('<span class="status-taken"><i class="fas fa-times-circle"></i> Venue is Busy at this time.</span>');
+                                btn.prop('disabled', true);
+                            }
+                        }
+                    });
                 }
             }
         });

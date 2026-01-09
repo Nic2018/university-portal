@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Details</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
+        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: 0.3s; text-decoration: none; position: relative; }
+        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
+        .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
+        
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; padding: 50px; overflow-y: auto; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
+
+        /* --- TICKET CARD --- */
+        .ticket-card {
+            background: white; width: 100%; max-width: 500px;
+            border-radius: 24px; padding: 40px;
+            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.1);
+            border: 1px solid #f1f5f9; position: relative;
+        }
+
+        .ticket-header { text-align: center; margin-bottom: 30px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 30px; }
+        .ticket-header h2 { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin-top: 15px; }
+        .status-badge { 
+            display: inline-block; padding: 6px 14px; border-radius: 20px; 
+            font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .detail-row { display: flex; align-items: center; margin-bottom: 20px; }
+        .icon-box { 
+            width: 45px; height: 45px; border-radius: 12px; background: #f8fafc; color: #64748b; 
+            display: flex; justify-content: center; align-items: center; font-size: 1.1rem; margin-right: 15px; 
+        }
+        .detail-text h4 { font-size: 0.85rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+        .detail-text p { font-size: 1rem; color: #334155; font-weight: 500; }
+
+        .btn-back {
+            display: block; width: 100%; text-align: center; padding: 15px;
+            background: #f1f5f9; color: #64748b; border-radius: 14px;
+            text-decoration: none; font-weight: 600; margin-top: 30px; transition: 0.3s;
+        }
+        .btn-back:hover { background: #e2e8f0; color: #334155; }
+
+        /* Action Buttons (Only for Owner) */
+        .owner-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-edit { flex: 1; text-align: center; padding: 12px; background: #eef2ff; color: #4a6cf7; border-radius: 12px; text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .btn-edit:hover { background: #4a6cf7; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <a href="{% url 'dashboard' %}" class="sidebar-icon"><i class="fas fa-home"></i></a>
+        <a href="{% url 'calendar' %}" class="sidebar-icon active"><i class="fas fa-calendar-alt"></i></a>
+        </div>
+
+    <div class="main-content">
+        <div class="ticket-card">
+            
+            <div class="ticket-header">
+                {% if booking.status == 'APPROVED' %}
+                    <span class="status-badge" style="background:#f0fdf4; color:#16a34a;">Approved</span>
+                {% elif booking.status == 'REJECTED' %}
+                    <span class="status-badge" style="background:#fef2f2; color:#dc2626;">Rejected</span>
+                {% else %}
+                    <span class="status-badge" style="background:#fffbeb; color:#d97706;">Pending</span>
+                {% endif %}
+
+                <h2>{{ booking.event_name }}</h2>
+                <p style="color:#64748b; font-size:0.95rem;">Booked by {{ booking.user.first_name|default:booking.user.username }}</p>
+            </div>
+
+            <div class="detail-row">
+                <div class="icon-box"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="detail-text">
+                    <h4>Venue</h4>
+                    <p>{{ booking.venue.name }} ({{ booking.venue.location }})</p>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="icon-box"><i class="far fa-calendar-alt"></i></div>
+                <div class="detail-text">
+                    <h4>Date</h4>
+                    <p>{{ booking.start_time|date:"l, d F Y" }}</p>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="icon-box"><i class="far fa-clock"></i></div>
+                <div class="detail-text">
+                    <h4>Time</h4>
+                    <p>{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</p>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <div class="icon-box"><i class="fas fa-align-left"></i></div>
+                <div class="detail-text">
+                    <h4>Description</h4>
+                    <p>{{ booking.description|default:"No description provided." }}</p>
+                </div>
+            </div>
+
+            {% if request.user == booking.user %}
+                <div class="owner-actions">
+                    <a href="{% url 'modify_booking' booking.id %}" class="btn-edit"><i class="fas fa-edit"></i> Edit</a>
+                </div>
+            {% endif %}
+
+            <a href="{% url 'calendar' %}" class="btn-back">Back to Calendar</a>
+        </div>
+    </div>
+
+</body>
+</html>

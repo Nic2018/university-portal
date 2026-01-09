@@ -1,41 +1,50 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# 1. The Venue Table (Stores info about Classrooms, Labs, Halls)
+# 1. The Venue Table
 class Venue(models.Model):
     name = models.CharField(max_length=200, help_text="e.g. Lecture Hall A")
     location = models.CharField(max_length=200, help_text="e.g. Block B, Level 2")
     capacity = models.IntegerField(help_text="How many people can fit?")
-    has_projector = models.BooleanField(default=False)
-    has_ac = models.BooleanField(default=True, verbose_name="Has A/C")
+    equipment = models.CharField(max_length=200, blank=True, help_text="e.g. Projector, Wifi, AC")
     
-    # This just makes it look nice in the Admin panel
     def __str__(self):
         return f"{self.name} ({self.location})"
 
-# 2. The Booking Table (Links a Student to a Venue for a specific time)
+# 2. The Booking Table
 class Booking(models.Model):
     STATUS_CHOICES = [
-        ('PENDING', 'Pending Approval'),
+        ('PENDING', 'Pending'),
         ('APPROVED', 'Approved'),
         ('REJECTED', 'Rejected'),
     ]
 
-    # Relationships (The lines in your diagram)
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # If student is deleted, delete their bookings
-    venue = models.ForeignKey(Venue, on_delete=models.CASCADE) # If room is deleted, delete bookings for it
+    # NEW: Purpose Choices for the dropdown
+    PURPOSE_CHOICES = [
+        ('STUDY', 'Study'),
+        ('EVENT', 'Event'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE)
     
-    # Event Details
-    event_name = models.CharField(max_length=200)
+    # NEW: Purpose Field (Defaults to Study)
+    purpose = models.CharField(max_length=10, choices=PURPOSE_CHOICES, default='STUDY')
+
+    # UPDATED: event_name is now optional (blank=True) because "Study" sessions might auto-fill it
+    event_name = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
     
-    # Timing
+    # NEW: Document Upload (Optional)
+    # This stores files in a folder named 'booking_docs' inside your media directory
+    document = models.FileField(upload_to='booking_docs/', blank=True, null=True)
+
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     
-    # Admin Approval Status
+    # Stores the status (Default is 'PENDING')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
-    created_at = models.DateTimeField(auto_now_add=True) # Automatically set when created
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.event_name} by {self.user.username}"
+        return f"{self.event_name} - {self.status}"

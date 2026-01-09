@@ -1,19 +1,32 @@
 from django import forms
-from .models import Booking
+from .models import Venue, Booking
 
-# 1. Search Form (For finding venues)
 class VenueSearchForm(forms.Form):
-    query = forms.CharField(label='Search Venues', max_length=100, required=False, 
-                            widget=forms.TextInput(attrs={'placeholder': 'Search by name or location...'}))
+    query = forms.CharField(
+        required=False, 
+        label='Search',
+        widget=forms.TextInput(attrs={'placeholder': 'Search venues...'})
+    )
 
-# 2. Booking Form (For creating a new event)
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
-        fields = ['venue', 'event_name', 'description', 'start_time', 'end_time']
+        # UPDATED: Added 'purpose' and 'document' to the fields list
+        fields = ['venue', 'purpose', 'event_name', 'description', 'start_time', 'end_time', 'document']
         
-        # This makes the date/time inputs look like real pickers in the browser
         widgets = {
-            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+            # You can add specific widgets here if needed, but the defaults usually work fine
         }
+
+    def __init__(self, *args, **kwargs):
+        super(BookingForm, self).__init__(*args, **kwargs)
+        
+        # --- Customizing the Dropdown Text ---
+        # This shows "Venue Name (Location)" in the dropdown
+        self.fields['venue'].label_from_instance = lambda obj: f"{obj.name} ({obj.location})"
+        
+        # --- Styling ---
+        # Adds the 'form-control' class to all inputs for consistent design
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})

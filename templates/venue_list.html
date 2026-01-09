@@ -1,55 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Find Venues</title>
+    <meta charset="UTF-8">
+    <title>Campus Venues</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
-        body { display:flex; height:100vh; background:#f8f9fc; overflow:hidden; }
-        .sidebar { width:90px; background:#fff; display:flex; flex-direction:column; align-items:center; padding:30px 0; box-shadow:2px 0 20px rgba(0,0,0,0.03); z-index:10; }
-        .sidebar-icon { width:50px; height:50px; border-radius:12px; display:flex; justify-content:center; align-items:center; color:#999; font-size:1.2rem; margin-bottom:25px; transition:0.3s; text-decoration:none; position:relative; }
-        .sidebar-icon:hover { background:#f0f4ff; color:#4a6cf7; }
-        .sidebar-icon.active { background:#4a6cf7; color:white; box-shadow:0 10px 20px rgba(74,108,247,0.3); }
-        .sidebar-icon.logout { margin-top:auto; color:#ff5b5b; }
-        .sidebar-icon::after { content:attr(data-tooltip); position:absolute; left:70px; top:50%; transform:translateY(-50%) translateX(10px); background:#222; color:white; padding:6px 12px; border-radius:6px; font-size:0.85rem; white-space:nowrap; opacity:0; visibility:hidden; transition:0.2s; pointer-events:none; z-index:100; }
-        .sidebar-icon:hover::after { opacity:1; visibility:visible; transform:translateY(-50%) translateX(0); }
-        .main-content { flex:1; padding:30px; overflow-y:auto; }
-        .venue-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:25px; }
-        .venue-card { background:white; padding:25px; border-radius:18px; display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,0.03); transition:0.3s; border:1px solid #f5f5f5; }
-        .venue-card:hover { transform:translateY(-7px); }
-        .badge { padding:6px 12px; border-radius:8px; font-size:0.75rem; width:fit-content; margin-bottom:15px; font-weight:600; }
-        .badge.yes { background:#e6fcf5; color:#0ca678; } .badge.no { background:#fff5f5; color:#ff6b6b; }
+        /* RESET & BASE */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { display: flex; height: 100vh; background-color: #f8f9fc; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 90px; background: #fff; display: flex; flex-direction: column; align-items: center; padding: 30px 0; box-shadow: 2px 0 20px rgba(0,0,0,0.03); z-index: 100; }
+        .sidebar-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; justify-content: center; align-items: center; color: #aeb9cc; font-size: 1.3rem; margin-bottom: 25px; transition: all 0.3s ease; text-decoration: none; position: relative; }
+        .sidebar-icon:hover { background: #f0f4ff; color: #4a6cf7; transform: translateY(-2px); }
+        .sidebar-icon.active { background: linear-gradient(135deg, #4a6cf7 0%, #3451c7 100%); color: white; box-shadow: 0 8px 20px rgba(74, 108, 247, 0.4); }
+        .sidebar-icon.logout { margin-top: auto; color: #ff6b6b; } .sidebar-icon.logout:hover { background: #fff5f5; color: #d63031; }
+        .sidebar-icon::after { content: attr(data-tooltip); position: absolute; left: 75px; top: 50%; transform: translateY(-50%) translateX(10px); background-color: #2d3436; color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none; z-index: 100; }
+        .sidebar-icon:hover::after { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; padding: 50px; overflow-y: auto; background: radial-gradient(circle at top left, #f8fafd, #f0f4f8); }
+
+        .header { margin-bottom: 40px; display: flex; flex-direction: column; gap: 20px; } 
+        @media (min-width: 1100px) {
+            .header { flex-direction: row; justify-content: space-between; align-items: flex-end; }
+        }
+
+        .header-title h1 { font-size: 2.2rem; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
+        .header-title p { color: #64748b; margin-top: 5px; font-size: 1rem; }
+
+        /* --- SEARCH & FILTERS BAR --- */
+        .search-container { display: flex; gap: 15px; width: 100%; max-width: 800px; }
+        .search-wrapper { position: relative; flex: 2; }
+        
+        .search-input {
+            width: 100%; padding: 15px 20px 15px 50px;
+            border: 2px solid #eef2f6; border-radius: 15px;
+            background: white; font-size: 0.95rem; color: #1e293b;
+            transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        }
+        .search-input:focus { border-color: #4a6cf7; outline: none; box-shadow: 0 4px 20px rgba(74, 108, 247, 0.15); }
+        .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; pointer-events: none; transition: 0.3s; }
+        .search-input:focus + .search-icon { color: #4a6cf7; }
+
+        /* Filter Dropdowns */
+        .filter-select {
+            flex: 1; padding: 15px 20px;
+            border: 2px solid #eef2f6; border-radius: 15px;
+            background: white; font-size: 0.95rem; color: #1e293b;
+            cursor: pointer; transition: 0.3s; appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234a6cf7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 1.2rem top 50%; background-size: 0.7rem auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); min-width: 140px;
+        }
+        .filter-select:focus { border-color: #4a6cf7; outline: none; }
+        
+        .btn-go {
+            padding: 0 25px; background: #4a6cf7; color: white; border: none;
+            border-radius: 15px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2); transition: 0.3s;
+        }
+        .btn-go:hover { background: #3258e8; transform: translateY(-2px); }
+
+        /* --- VENUE GRID --- */
+        .venue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+
+        .venue-card {
+            background: white; border-radius: 24px; padding: 30px; position: relative; overflow: hidden;
+            border: 1px solid #f1f5f9; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column;
+        }
+        .venue-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); border-color: transparent; }
+
+        .venue-icon-box {
+            width: 60px; height: 60px; border-radius: 18px; display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; margin-bottom: 20px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0284c7;
+        }
+        .venue-card:nth-child(2n) .venue-icon-box { background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); color: #db2777; }
+        .venue-card:nth-child(3n) .venue-icon-box { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #16a34a; }
+
+        .venue-name { font-size: 1.3rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+        .venue-details { margin-bottom: 25px; list-style: none; }
+        .venue-details li { display: flex; align-items: center; color: #64748b; font-size: 0.9rem; margin-bottom: 8px; }
+        .venue-details li i { width: 25px; color: #94a3b8; }
+
+        .btn-book {
+            margin-top: auto; display: inline-flex; justify-content: center; align-items: center;
+            width: 100%; padding: 12px; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; border-radius: 12px;
+            font-weight: 600; font-size: 0.95rem; text-decoration: none; transition: 0.3s ease;
+        }
+        .btn-book:hover { background: #4a6cf7; color: white; border-color: #4a6cf7; }
+        .btn-book i { margin-left: 8px; font-size: 0.8rem; }
+
+        .no-results { grid-column: 1 / -1; text-align: center; padding: 60px; color: #94a3b8; font-size: 1.1rem; }
     </style>
 </head>
 <body>
+
     <div class="sidebar">
         <a href="{% url 'dashboard' %}" class="sidebar-icon" data-tooltip="Dashboard"><i class="fas fa-home"></i></a>
         <a href="{% url 'my_bookings' %}" class="sidebar-icon" data-tooltip="My Bookings"><i class="fas fa-list-ul"></i></a>
         <a href="{% url 'calendar' %}" class="sidebar-icon" data-tooltip="View Schedule"><i class="fas fa-calendar-alt"></i></a>
-        
         <a href="#" class="sidebar-icon active" data-tooltip="Campus Venues"><i class="fas fa-map-marker-alt"></i></a>
-        
         <a href="{% url 'create_booking' %}" class="sidebar-icon" data-tooltip="Book a Room"><i class="fas fa-plus"></i></a>
-        
         <a href="{% url 'profile' %}" class="sidebar-icon" data-tooltip="Settings"><i class="fas fa-user-cog"></i></a>
-        
-        <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Log Out"><i class="fas fa-sign-out-alt"></i></a>
+        {% if user.username == 'guest' %}
+            <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Register Now"><i class="fas fa-user-plus"></i></a>
+        {% else %}
+            <a href="{% url 'logout' %}" class="sidebar-icon logout" data-tooltip="Log Out"><i class="fas fa-sign-out-alt"></i></a>
+        {% endif %}
     </div>
+
     <div class="main-content">
-        <h1>Find Venues</h1>
-        <form method="GET" style="margin-bottom:30px;"><input type="text" name="query" placeholder="Search..." style="padding:10px; border-radius:10px; border:1px solid #ddd; width:300px;"></form>
+        <div class="header">
+            <div class="header-title">
+                <h1>Find Your Space 📍</h1>
+                <p>Explore labs, lecture halls, and study rooms available on campus.</p>
+            </div>
+            
+            <form method="GET" class="search-container">
+                <div class="search-wrapper">
+                    <input type="text" name="query" class="search-input" placeholder="Search by name..." value="{{ request.GET.query }}">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <select name="location" class="filter-select" onchange="this.form.submit()">
+                    <option value="">All Locations</option>
+                    <option value="Block A" {% if request.GET.location == "Block A" %}selected{% endif %}>Block A</option>
+                    <option value="Block B" {% if request.GET.location == "Block B" %}selected{% endif %}>Block B</option>
+                    <option value="Block C" {% if request.GET.location == "Block C" %}selected{% endif %}>Block C</option>
+                    <option value="Library" {% if request.GET.location == "Library" %}selected{% endif %}>Library</option>
+                </select>
+
+                <select name="capacity" class="filter-select" onchange="this.form.submit()">
+                    <option value="">Any Size</option>
+                    <option value="small" {% if request.GET.capacity == "small" %}selected{% endif %}>Small (< 20)</option>
+                    <option value="medium" {% if request.GET.capacity == "medium" %}selected{% endif %}>Medium (20-50)</option>
+                    <option value="large" {% if request.GET.capacity == "large" %}selected{% endif %}>Large (50+)</option>
+                </select>
+
+                <button type="submit" class="btn-go">Search</button>
+            </form>
+        </div>
+
         <div class="venue-grid">
             {% for venue in venues %}
-            <div class="venue-card">
-                <span class="badge {% if venue.has_projector %}yes{% else %}no{% endif %}">{% if venue.has_projector %}Video Enabled{% else %}No Projector{% endif %}</span>
-                <h3 style="margin-bottom:5px;">{{ venue.name }}</h3>
-                <p style="color:#888; margin-bottom:20px;"><i class="fas fa-map-pin"></i> {{ venue.location }}</p>
-                <div style="margin-top:auto; display:flex; justify-content:space-between; color:#555;">
-                    <span><i class="fas fa-users"></i> {{ venue.capacity }}</span>
-                    <span>{% if venue.has_ac %}❄️ A/C{% else %}💨 Fan{% endif %}</span>
+                <div class="venue-card">
+                    <div class="venue-icon-box"><i class="fas fa-building"></i></div>
+                    <div class="venue-name">{{ venue.name }}</div>
+                    <ul class="venue-details">
+                        <li><i class="fas fa-map-pin"></i> {{ venue.location }}</li>
+                        <li><i class="fas fa-users"></i> Capacity: {{ venue.capacity }} people</li>
+                        <li><i class="fas fa-wifi"></i> {{ venue.equipment|default:"Standard Equipment" }}</li>
+                    </ul>
+                    
+                    <a href="{% url 'create_booking' %}?venue={{ venue.id }}" class="btn-book">
+                        Book Now <i class="fas fa-arrow-right"></i>
+                    </a>
+                    
                 </div>
-            </div>
+            {% empty %}
+                <div class="no-results">
+                    <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                    <p>No venues found matching your filters.</p>
+                    <a href="{% url 'venue_list' %}" style="color: #4a6cf7; text-decoration: none; font-weight: 600; margin-top: 10px; display: block;">Clear Filters</a>
+                </div>
             {% endfor %}
         </div>
     </div>

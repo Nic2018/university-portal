@@ -12,16 +12,17 @@
         
         body {
             height: 100vh;
-            display: flex; /* SPLIT SCREEN LAYOUT */
+            display: flex;
             overflow: hidden;
-            background-color: #fff;
+            background-color: #f8fafd; /* Slightly off-white background for depth */
         }
 
         /* --- LEFT SIDE: THE ARTWORK --- */
         .brand-side {
-            flex: 1.2; /* Takes up 60% of the screen */
-            background: linear-gradient(135deg, #003366 0%, #001f3f 100%), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
-            background-blend-mode: multiply; /* Blends the blue with the image */
+            flex: 1.2;
+            /* Richer, deeper gradient */
+            background: linear-gradient(135deg, #002952 0%, #00152e 100%), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-blend-mode: multiply;
             background-size: cover;
             background-position: center;
             position: relative;
@@ -30,120 +31,168 @@
             flex-direction: column;
             justify-content: center;
             padding: 80px;
+            overflow: hidden; /* Ensure circles don't overflow */
         }
         
         .brand-content { position: relative; z-index: 2; max-width: 600px; }
-        .brand-content h1 { font-size: 3.5rem; font-weight: 700; line-height: 1.1; margin-bottom: 20px; }
-        .brand-content p { font-size: 1.1rem; opacity: 0.8; font-weight: 300; line-height: 1.6; }
+        .brand-content h1 { font-size: 3.8rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; letter-spacing: -1px; }
+        .brand-content p { font-size: 1.15rem; opacity: 0.85; font-weight: 300; line-height: 1.7; }
 
-        /* Floating decoration circles for "depth" */
+        /* Floating decoration circles - Premium Frosted Glass Effect */
         .circle {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px); /* The premium frosted effect */
+            -webkit-backdrop-filter: blur(10px);
             z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .c1 { width: 300px; height: 300px; top: -50px; left: -50px; }
-        .c2 { width: 500px; height: 500px; bottom: -100px; right: -100px; }
+        .c1 { width: 400px; height: 400px; top: -100px; left: -100px; }
+        .c2 { width: 600px; height: 600px; bottom: -150px; right: -150px; }
 
         /* --- RIGHT SIDE: THE FORM --- */
         .form-side {
-            flex: 0.8; /* Takes up 40% of the screen */
+            flex: 0.8;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 40px;
-            background: #fff;
+            background: #f8fafd; /* Match body for seamless look before card */
         }
 
-        .login-wrapper { width: 100%; max-width: 380px; }
+        /* NEW: THE PREMIUM CARD CONTAINER */
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            padding: 50px;
+            border-radius: 24px; /* Smoother corners */
+            /* Deep, soft shadow for "floating" effect */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        }
 
-        .header-mobile { display: none; } /* Only for mobile */
-        
-        .welcome-text { margin-bottom: 40px; }
-        .welcome-text h2 { font-size: 2rem; color: #1a1a1a; margin-bottom: 10px; font-weight: 700; }
-        .welcome-text p { color: #888; font-size: 0.95rem; }
+        .welcome-text { margin-bottom: 35px; text-align: center; }
+        .welcome-text h2 { font-size: 2.2rem; color: #1a1a1a; margin-bottom: 10px; font-weight: 700; letter-spacing: -0.5px; }
+        .welcome-text p { color: #666; font-size: 1rem; }
 
         /* --- INPUT FIELDS --- */
         .input-group { margin-bottom: 25px; position: relative; }
         .input-group label {
             display: block;
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 8px;
-            font-weight: 500;
+            font-size: 0.9rem;
+            color: #444;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
         
         .input-field {
             width: 100%;
-            padding: 15px 15px 15px 45px; /* Space for icon */
-            border: 2px solid #f0f0f0; /* Subtle border */
-            border-radius: 12px; /* Smooth rounded corners */
+            padding: 16px 16px 16px 50px; /* More comfortable padding */
+            border: 2px solid #eef2f7; /* Very subtle border initially */
+            border-radius: 14px;
             font-size: 1rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth custom transition */
             color: #333;
-            background: #fafafa;
+            background: #fff; /* Pure white background */
         }
         
         .input-field:focus {
             border-color: #4a6cf7;
             background: #fff;
             outline: none;
-            box-shadow: 0 4px 15px rgba(74, 108, 247, 0.1); /* Glow effect */
+            /* A tighter, higher-quality glow */
+            box-shadow: 0 0 0 4px rgba(74, 108, 247, 0.15);
         }
+
+        .input-field::placeholder { color: #bbb; font-weight: 300; }
 
         .icon {
             position: absolute;
-            left: 15px;
-            top: 42px; /* Adjusted based on label height */
-            color: #aaa;
+            left: 18px;
+            top: 48px;
+            font-size: 1.1rem;
+            color: #ccc;
             transition: 0.3s;
         }
         .input-field:focus + .icon, .input-field:focus ~ .icon { color: #4a6cf7; }
 
-        /* --- PREMIUM BUTTON --- */
+        /* --- PRIMARY BUTTON (Sign In) --- */
         .btn-login {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%); /* Gradient Background */
+            padding: 18px;
+            /* Richer gradient */
+            background: linear-gradient(135deg, #004e92 0%, #000428 100%);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(74, 108, 247, 0.2); /* Soft drop shadow */
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 10px 25px rgba(0, 78, 146, 0.3);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
         }
 
         .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 78, 146, 0.4);
+        }
+
+        /* --- SECONDARY BUTTON (Guest Login) --- */
+        /* Upgraded from simple text link to a premium secondary button */
+        .btn-guest {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 16px;
+            background: #fff;
+            color: #444;
+            border: 2px solid #eef2f7;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+            gap: 8px;
+        }
+        
+        .btn-guest:hover {
+            border-color: #4a6cf7;
+            color: #4a6cf7;
+            background: #f8fafd;
             transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(74, 108, 247, 0.3);
         }
 
         /* --- ALERTS --- */
         .alert-error {
             background-color: #fff2f2;
-            color: #ff3333;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            color: #d32f2f;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
             margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-left: 4px solid #ff3333;
+            gap: 12px;
+            border-left: 5px solid #d32f2f;
+            box-shadow: 0 5px 15px rgba(211, 47, 47, 0.1);
         }
 
         /* --- LINKS --- */
-        .bottom-links { margin-top: 25px; text-align: center; font-size: 0.9rem; color: #666; }
-        .bottom-links a { color: #4a6cf7; text-decoration: none; font-weight: 600; }
-        .bottom-links a:hover { text-decoration: underline; }
+        .bottom-links { text-align: center; font-size: 0.95rem; color: #777; }
+        .bottom-links a { color: #4a6cf7; text-decoration: none; font-weight: 700; transition: 0.2s; }
+        .bottom-links a:hover { color: #003366; }
 
         /* Responsive */
         @media (max-width: 900px) {
-            .brand-side { display: none; } /* Hide image on small screens */
-            .form-side { flex: 1; }
+            .brand-side { display: none; }
+            .form-side { flex: 1; background: #fff; }
+            .login-card { box-shadow: none; padding: 20px; } /* Flatten on mobile */
         }
     </style>
 </head>
@@ -159,7 +208,7 @@
     </div>
 
     <div class="form-side">
-        <div class="login-wrapper">
+        <div class="login-card">
             
             <div class="welcome-text">
                 <h2>Welcome Back</h2>
@@ -191,11 +240,15 @@
                 </div>
 
                 <button type="submit" class="btn-login">Sign in to Portal</button>
-
-                <div class="bottom-links">
-                    New here? <a href="{% url 'register' %}">Create an account</a>
-                </div>
             </form>
+
+            <a href="{% url 'guest_login' %}" class="btn-guest">
+                <i class="fas fa-user-secret" style="font-size: 0.9rem;"></i> Continue as Guest
+            </a>
+
+            <div class="bottom-links">
+                New here? <a href="{% url 'register' %}">Create an account</a>
+            </div>
         </div>
     </div>
 
