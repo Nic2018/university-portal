@@ -119,7 +119,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # ==========================================
-# FILE UPLOAD SETTINGS (NEW)
+# FILE UPLOAD SETTINGS
 # ==========================================
 
 # This is the URL address for accessing files in the browser
@@ -127,3 +127,18 @@ MEDIA_URL = '/media/'
 
 # This is the actual folder on your computer where files will be saved
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ==========================================
+# EMAIL SETTINGS (NEW)
+# ==========================================
+
+# OPTION 1: FOR TESTING (Prints email to your terminal/cmd)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# OPTION 2: FOR REAL GMAIL (Use this when you are ready to go live)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your_email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your_app_password' # Generate an App Password in Google Settings

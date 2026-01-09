@@ -1,12 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.core.mail import send_mail  # <--- NEW IMPORT
+from django.conf import settings        # <--- NEW IMPORT
 from .models import Venue, Booking
 
 # Manage Venues
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
     list_display = ('name', 'location', 'capacity', 'equipment') 
-    # This search_fields is REQUIRED for the booking autocomplete to work
     search_fields = ('name', 'location') 
 
 # Manage Bookings
@@ -17,15 +18,13 @@ class BookingAdmin(admin.ModelAdmin):
     search_fields = ('event_name', 'user__username', 'description')
     readonly_fields = ('created_at',)
 
-    # --- FIX 1: Use Search Boxes instead of Dropdowns ---
-    # This fixes the "User" and "Venue" display issues
+    # Use Search Boxes & Radio Buttons
     autocomplete_fields = ['venue', 'user']
+    radio_fields = {
+        'purpose': admin.HORIZONTAL,
+        'status': admin.HORIZONTAL
+    }
 
-    # --- FIX 2: Use Radio Buttons for Purpose ---
-    # This changes the "Purpose" dropdown to visible buttons
-    radio_fields = {'purpose': admin.HORIZONTAL}
-
-    # Bulk Actions
     actions = ['approve_bookings', 'reject_bookings']
 
     # Color-Coded Status Label
@@ -46,10 +45,40 @@ class BookingAdmin(admin.ModelAdmin):
             color, icon, obj.get_status_display()
         )
 
+    # --- UPDATED ACTION: APPROVE & SEND EMAIL ---
     @admin.action(description='Mark selected bookings as APPROVED')
     def approve_bookings(self, request, queryset):
+        # 1. Update status in Database
         updated_count = queryset.update(status='APPROVED')
-        self.message_user(request, f"{updated_count} bookings were successfully marked as APPROVED.")
+        
+        # 2. Loop through and send emails
+        for booking in queryset:
+            if booking.user.email: # Check if user has an email
+                subject = f"Booking Approved: {booking.event_name} ✅"
+                message = f"""
+                Hi {booking.user.first_name},
+
+                Good news! Your booking request has been APPROVED by the admin.
+
+                Event: {booking.event_name}
+                Venue: {booking.venue.name}
+                Time: {booking.start_time.strftime('%Y-%m-%d %H:%M')}
+                
+                Please arrive on time.
+                """
+                
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        'admin@university.com', # From Email
+                        [booking.user.email],   # To Email
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    print(f"Error sending email: {e}")
+
+        self.message_user(request, f"{updated_count} bookings marked as APPROVED & notification emails sent.")
 
     @admin.action(description='Mark selected bookings as REJECTED')
     def reject_bookings(self, request, queryset):
