@@ -330,3 +330,18 @@ def ai_chat_response(request):
             return JsonResponse({'response': "⚠️ My brain hit a snag. Please try again."})
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required(login_url='login')
+def dashboard_view(request):
+    # 1. Get counts for the chart
+    pending_count = Booking.objects.filter(user=request.user, status='PENDING').count()
+    approved_count = Booking.objects.filter(user=request.user, status='APPROVED').count()
+    rejected_count = Booking.objects.filter(user=request.user, status='REJECTED').count()
+    
+    # 2. Pass data to template
+    context = {
+        'p_count': pending_count,
+        'a_count': approved_count,
+        'r_count': rejected_count
+    }
+    return render(request, 'dashboard.html', context)
