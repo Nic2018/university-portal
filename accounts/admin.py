@@ -40,19 +40,49 @@ class VenueAdmin(admin.ModelAdmin):
 # ==========================================
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('event_name', 'user', 'venue', 'start_time', 'colored_status', 'purpose', 'document')
-    list_filter = ('status', 'venue', 'start_time', 'purpose')
+    list_display = ('event_name', 'user', 'venue', 'start_time', 'colored_status', 'purpose', 'approved_by_display')
+    list_filter = ('status', 'venue', 'start_time', 'purpose', 'created_at')
     search_fields = ('event_name', 'user__username', 'description')
-    readonly_fields = ('created_at',)
-
-    # Use Search Boxes & Radio Buttons
-    autocomplete_fields = ['venue', 'user']
-    radio_fields = {
-        'purpose': admin.HORIZONTAL,
-        'status': admin.HORIZONTAL
-    }
+    readonly_fields = ('created_at', 'updated_at', 'qr_code_display')
+    
+    fieldsets = (
+        ('Booking Details', {
+            'fields': ('user', 'venue', 'event_name', 'description', 'purpose')
+        }),
+        ('Timing', {
+            'fields': ('start_time', 'end_time')
+        }),
+        ('Equipment & Documents', {
+            'fields': ('addon_equipment', 'document')
+        }),
+        ('Status & Approval', {
+            'fields': ('status', 'approved_by', 'approved_at')
+        }),
+        ('QR Code', {
+            'fields': ('qr_code_display',),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
     actions = ['approve_bookings', 'reject_bookings']
+
+    # Display QR Code
+    @admin.display(description='QR Code')
+    def qr_code_display(self, obj):
+        if obj.qr_code:
+            return mark_safe(f'<img src="{obj.qr_code.url}" width="200" height="200">')
+        return "No QR code generated"
+
+    # Display approved by info
+    @admin.display(description='Approved By')
+    def approved_by_display(self, obj):
+        if obj.approved_by:
+            return f"{obj.approved_by.username} ({obj.approved_at.strftime('%Y-%m-%d %H:%M')})"
+        return "—"
 
     # Color-Coded Status Label
     @admin.display(description='Status')
@@ -72,55 +102,74 @@ class BookingAdmin(admin.ModelAdmin):
             color, icon, obj.get_status_display()
         )
 
-    # --- ACTION 1: APPROVE & SEND EMAIL ---
-    @admin.action(description='Mark selected bookings as APPROVED')
+    # --- ACTION 1: APPROVE & SEND EMAIL & TRACK APPROVAL ---
+    @admin.action(description='✅ Approve selected bookings')
     def approve_bookings(self, request, queryset):
-        updated_count = queryset.update(status='APPROVED')
-        
         for booking in queryset:
+            booking.status = 'APPROVED'
+            booking.approved_by = request.user
+            booking.approved_at = timezone.now()
+            booking.save()
+            
+            # Send email notification
             if booking.user.email:
                 subject = f"Booking Approved: {booking.event_name} ✅"
                 message = f"""
-                Hi {booking.user.first_name},
+Hi {booking.user.first_name or booking.user.username},
 
-                Good news! Your booking request has been APPROVED.
+Great news! Your booking request has been APPROVED.
 
-                Event: {booking.event_name}
-                Venue: {booking.venue.name}
-                Time: {booking.start_time.strftime('%Y-%m-%d %H:%M')}
-                
-                Please arrive on time.
+📍 Event: {booking.event_name}
+📌 Venue: {booking.venue.name} ({booking.venue.location})
+⏰ Time: {booking.start_time.strftime('%Y-%m-%d %H:%M')} to {booking.end_time.strftime('%H:%M')}
+🎯 Purpose: {booking.get_purpose_display()}
+
+Please arrive on time. Your QR entry pass is ready!
+
+Best regards,
+Campus Booking Admin
                 """
                 try:
-                    send_mail(subject, message, 'admin@university.com', [booking.user.email], fail_silently=True)
-                except:
-                    pass
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [booking.user.email], fail_silently=True)
+                except Exception as e:
+                    print(f"Error sending email: {e}")
 
-        self.message_user(request, f"{updated_count} bookings marked as APPROVED & emails sent.")
+        self.message_user(request, f"✅ {queryset.count()} bookings approved & user notifications sent.")
 
-    # --- ACTION 2: REJECT & SEND EMAIL (UPDATED) ---
-    @admin.action(description='Mark selected bookings as REJECTED')
+    # --- ACTION 2: REJECT & SEND EMAIL ---
+    @admin.action(description='❌ Reject selected bookings')
     def reject_bookings(self, request, queryset):
-        updated_count = queryset.update(status='REJECTED')
-        
-        # Now we loop through rejected bookings to send the notification
         for booking in queryset:
+            booking.status = 'REJECTED'
+            booking.approved_by = request.user
+            booking.approved_at = timezone.now()
+            booking.save()
+            
+            # Send email notification
             if booking.user.email:
                 subject = f"Booking Update: {booking.event_name} ❌"
                 message = f"""
-                Hi {booking.user.first_name},
+Hi {booking.user.first_name or booking.user.username},
 
-                We regret to inform you that your booking request has been REJECTED.
+We regret to inform you that your booking request has been REJECTED.
 
-                Event: {booking.event_name}
-                Venue: {booking.venue.name}
-                Time: {booking.start_time.strftime('%Y-%m-%d %H:%M')}
-                
-                Please contact the admin for more details or try booking a different slot.
+📍 Event: {booking.event_name}
+📌 Venue: {booking.venue.name} ({booking.venue.location})
+⏰ Requested Time: {booking.start_time.strftime('%Y-%m-%d %H:%M')} to {booking.end_time.strftime('%H:%M')}
+
+Possible reasons:
+- Venue not available at that time
+- Insufficient capacity
+- Policy violation
+
+Please try booking a different time slot or contact support for more details.
+
+Best regards,
+Campus Booking Admin
                 """
                 try:
-                    send_mail(subject, message, 'admin@university.com', [booking.user.email], fail_silently=True)
-                except:
-                    pass
+                    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [booking.user.email], fail_silently=True)
+                except Exception as e:
+                    print(f"Error sending email: {e}")
 
-        self.message_user(request, f"{updated_count} bookings marked as REJECTED & emails sent.")
+        self.message_user(request, f"❌ {queryset.count()} bookings rejected & user notifications sent.")

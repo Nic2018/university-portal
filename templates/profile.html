@@ -119,14 +119,6 @@
 
     <div class="main-content">
         <div class="profile-container">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="{% if 'error' in message.tags %}alert-error{% else %}alert-success{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
             {% if user.username == 'guest' %}
                 <div class="guest-warning">
                     <div style="font-size: 3rem; margin-bottom: 20px;">🔒</div>

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Campus Booking</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -107,13 +108,8 @@
     <div class="main-content">
         
         <div class="header">
-            {% if user.username == 'guest' %}
-                <h1>Welcome, Guest! 👋</h1>
-                <p>Register an account to start booking venues.</p>
-            {% else %}
-                <h1>Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
-                <p>Here's your booking overview for this semester.</p>
-            {% endif %}
+            <h1>Welcome, {{ user.first_name|default:user.username }}! 👋</h1>
+            <p>Here's your campus booking dashboard.</p>
         </div>
 
         <div class="action-grid">

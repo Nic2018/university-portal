@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Django Server (task)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "${workspaceFolder}/manage.py",
+        "runserver",
+        "8000"
+      ],
+      "presentation": {
+        "panel": "shared",
+        "echo": true,
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

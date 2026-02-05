@@ -4,6 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from datetime import datetime, date, timedelta
 from django.utils.safestring import mark_safe
@@ -11,7 +12,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import json
-import re  # Importing regex for smarter matching
+import re
 
 from .models import Venue, Booking
 from .forms import BookingForm, VenueSearchForm
@@ -41,16 +42,52 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     if request.method == 'POST':
-        user = User.objects.create_user(
-            username=request.POST['username'],
-            email=request.POST['email'],
-            password=request.POST['password'],
-            first_name=request.POST.get('first_name'),
-            last_name=request.POST.get('last_name')
-        )
-        user.save()
-        messages.success(request, "Account created! Please login.")
-        return redirect('login')
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        
+        # Validation
+        if not username or len(username) < 3:
+            messages.error(request, "Username must be at least 3 characters.")
+            return render(request, 'register.html')
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return render(request, 'register.html')
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered.")
+            return render(request, 'register.html')
+        
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'register.html')
+        
+        if len(password) < 8:
+            messages.error(request, "Password must be at least 8 characters.")
+            return render(request, 'register.html')
+        
+        if not any(c.isupper() for c in password):
+            messages.error(request, "Password must contain at least one uppercase letter.")
+            return render(request, 'register.html')
+        
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name
+            )
+            messages.success(request, "✅ Account created! Please login.")
+            return redirect('login')
+        except Exception as e:
+            messages.error(request, f"Error creating account: {str(e)}")
+            return render(request, 'register.html')
+    
     return render(request, 'register.html')
 
 def logout_view(request):
@@ -73,7 +110,16 @@ def guest_login_view(request):
 
 @login_required(login_url='login')
 def dashboard_view(request):
-    return render(request, 'dashboard.html')
+    # Get booking counts for the chart
+    a_count = Booking.objects.filter(user=request.user, status='APPROVED').count()
+    p_count = Booking.objects.filter(user=request.user, status='PENDING').count()
+    r_count = Booking.objects.filter(user=request.user, status='REJECTED').count()
+    
+    return render(request, 'dashboard.html', {
+        'a_count': a_count,
+        'p_count': p_count,
+        'r_count': r_count,
+    })
 
 @login_required(login_url='login')
 def venue_list_view(request):
@@ -100,7 +146,6 @@ def create_booking_view(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        # Handles request.FILES for document uploads
         form = BookingForm(request.POST, request.FILES)
         
         if form.is_valid():
@@ -108,35 +153,24 @@ def create_booking_view(request):
             booking.user = request.user 
             
             # --- AUTO-FILL LOGIC ---
-            if booking.purpose == 'STUDY':
+            if booking.purpose == 'STUDY' and not booking.event_name:
                 booking.event_name = "Study Session"
 
-            # --- CLASH DETECTION LOGIC ---
-            clashing_bookings = Booking.objects.filter(
-                venue=booking.venue,
-                status='APPROVED',
-                start_time__lt=booking.end_time,
-                end_time__gt=booking.start_time
-            )
-
-            if clashing_bookings.exists():
-                messages.error(request, "⚠️ Booking Failed! That time slot is already taken.")
-            else:
+            try:
+                booking.full_clean()  # Validates all constraints including time validation
                 booking.status = 'PENDING'
                 booking.save()
-                messages.success(request, "Booking request submitted successfully!")
-            
-            return redirect('dashboard')
+                messages.success(request, "✅ Booking request submitted successfully! Waiting for admin approval.")
+                return redirect('dashboard')
+            except ValidationError as e:
+                messages.error(request, f"❌ Booking Error: {e.messages[0] if e.messages else str(e)}")
+        else:
+            messages.error(request, "❌ Please fix the form errors below.")
     else:
-        # --- GET REQUEST (Page Load) ---
         initial_data = {}
-        
-        # Check if a Venue ID was passed
         venue_id = request.GET.get('venue')
         if venue_id:
             initial_data['venue'] = venue_id
-            
-        # Check if a Date was passed
         date_param = request.GET.get('date') 
         if date_param:
             initial_data['start_time'] = f"{date_param} 09:00"
@@ -155,14 +189,31 @@ def booking_detail_view(request, booking_id):
 @login_required(login_url='login')
 def modify_booking_view(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+    
+    # Don't allow modification of rejected bookings
+    if booking.status == 'REJECTED':
+        messages.error(request, "❌ Cannot modify rejected bookings.")
+        return redirect('my_bookings')
+    
     if request.method == 'POST':
         form = BookingForm(request.POST, request.FILES, instance=booking)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Booking updated successfully!")
-            return redirect('my_bookings')
+            try:
+                booking = form.save(commit=False)
+                booking.full_clean()  # Validate constraints
+                booking.status = 'PENDING'  # Reset to pending for re-approval
+                booking.approved_by = None  # Clear approval
+                booking.approved_at = None
+                booking.save()
+                messages.success(request, "✅ Booking updated! Awaiting admin approval.")
+                return redirect('my_bookings')
+            except ValidationError as e:
+                messages.error(request, f"❌ Validation Error: {e.messages[0] if e.messages else str(e)}")
+        else:
+            messages.error(request, "❌ Please fix the form errors below.")
     else:
         form = BookingForm(instance=booking)
+    
     return render(request, 'modify_booking.html', {'form': form, 'booking': booking})
 
 @login_required(login_url='login')
@@ -186,8 +237,23 @@ def get_date(req_day):
 
 @login_required(login_url='login')
 def my_bookings_view(request):
-    bookings = Booking.objects.filter(user=request.user).order_by('-start_time')
-    return render(request, 'my_bookings.html', {'bookings': bookings})
+    bookings = Booking.objects.filter(user=request.user).select_related('venue').order_by('-created_at')
+    
+    # Filter by status
+    status_filter = request.GET.get('status')
+    if status_filter and status_filter in ['PENDING', 'APPROVED', 'REJECTED']:
+        bookings = bookings.filter(status=status_filter)
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(bookings, 10)  # 10 bookings per page
+    page_number = request.GET.get('page')
+    bookings = paginator.get_page(page_number)
+    
+    return render(request, 'my_bookings.html', {
+        'bookings': bookings, 
+        'status_filter': status_filter
+    })
 
 @login_required(login_url='login')
 def delete_booking_view(request, booking_id):
@@ -330,18 +396,3 @@ def ai_chat_response(request):
             return JsonResponse({'response': "⚠️ My brain hit a snag. Please try again."})
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
-
-@login_required(login_url='login')
-def dashboard_view(request):
-    # 1. Get counts for the chart
-    pending_count = Booking.objects.filter(user=request.user, status='PENDING').count()
-    approved_count = Booking.objects.filter(user=request.user, status='APPROVED').count()
-    rejected_count = Booking.objects.filter(user=request.user, status='REJECTED').count()
-    
-    # 2. Pass data to template
-    context = {
-        'p_count': pending_count,
-        'a_count': approved_count,
-        'r_count': rejected_count
-    }
-    return render(request, 'dashboard.html', context)

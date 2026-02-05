@@ -123,18 +123,6 @@
             <p>Manage your upcoming events and venue bookings.</p>
         </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert-{{ message.tags }}" style="
-                    padding: 15px; border-radius: 12px; margin-top: 20px; margin-bottom: 20px;
-                    {% if message.tags == 'success' %} background: #f0fdf4; color: #16a34a; border-left: 5px solid #16a34a;
-                    {% elif message.tags == 'error' %} background: #fef2f2; color: #dc2626; border-left: 5px solid #dc2626;
-                    {% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
         <div class="bookings-grid">
             {% for booking in bookings %}
                 <div class="booking-card">

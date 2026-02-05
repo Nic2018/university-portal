@@ -1,0 +1,129 @@
+<!-- Animated Notification System -->
+<!-- Include this in your templates with {% include "notifications.html" %} -->
+
+<style>
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+
+    .animated-alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px;
+        border-radius: 12px;
+        margin: 20px 0;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        animation: slideInLeft 0.5s ease-out;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .animated-alert:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .animated-alert.dismissing {
+        animation: slideOutRight 0.5s ease-in forwards;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #f0fdf4 0%, #e8fce8 100%);
+        color: #16a34a;
+        border-left: 5px solid #16a34a;
+    }
+
+    .alert-error {
+        background: linear-gradient(135deg, #fef2f2 0%, #ffe8e8 100%);
+        color: #dc2626;
+        border-left: 5px solid #dc2626;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #fffbeb 0%, #fff9e6 100%);
+        color: #d97706;
+        border-left: 5px solid #d97706;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e8f4fd 100%);
+        color: #0284c7;
+        border-left: 5px solid #0284c7;
+    }
+
+    .alert-icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .alert-success .alert-icon::before {
+        content: "✓";
+    }
+
+    .alert-error .alert-icon::before {
+        content: "✕";
+    }
+
+    .alert-warning .alert-icon::before {
+        content: "⚠";
+    }
+
+    .alert-info .alert-icon::before {
+        content: "ℹ";
+    }
+</style>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="animated-alert alert-{{ message.tags }}">
+            <span class="alert-icon"></span>
+            <span>{{ message }}</span>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.animated-alert');
+        alerts.forEach((alert) => {
+            // Auto-dismiss after 4 seconds
+            const dismissTimer = setTimeout(() => {
+                dismissAlert(alert);
+            }, 4000);
+
+            // Click to dismiss immediately
+            alert.addEventListener('click', function() {
+                clearTimeout(dismissTimer);
+                dismissAlert(alert);
+            });
+        });
+
+        function dismissAlert(alert) {
+            alert.classList.add('dismissing');
+            setTimeout(() => {
+                alert.remove();
+            }, 500);
+        }
+    });
+</script>
