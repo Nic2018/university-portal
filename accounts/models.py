@@ -127,11 +127,13 @@ class Booking(models.Model):
         schedule = VenueSchedule.get_schedule()
         start_hour = self.start_time.hour
         end_hour = self.end_time.hour
+        end_minute = self.end_time.minute
 
         if start_hour < schedule.open_hour or start_hour >= schedule.close_hour:
             raise ValidationError({'start_time': f"Start time must be between {schedule.open_hour}:00 and {schedule.close_hour}:00"})
 
-        if end_hour > schedule.close_hour:
+        # Check end time: must not go past close hour (even by 1 minute)
+        if end_hour > schedule.close_hour or (end_hour == schedule.close_hour and end_minute > 0):
             raise ValidationError({'end_time': f"End time must be before {schedule.close_hour}:00"})
 
         # Check for clashes
