@@ -195,6 +195,29 @@
                     </div>
                 </div>
 
+                <!-- AVAILABILITY DISPLAY -->
+                <div class="form-group" id="availability-info-group" style="display: none; background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #0c4a6e; font-size: 0.95rem;">Available Time Slots for</h4>
+                        <p id="selected-date-display" style="margin: 0; color: #0369a1; font-weight: 600;"></p>
+                    </div>
+
+                    <div id="slot-availability-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px;">
+                        <!-- Will be populated dynamically -->
+                    </div>
+
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #0ea5e9;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+                            <span style="font-size: 0.85rem; color: #047857;">Available</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                            <span style="font-size: 0.85rem; color: #991b1b;">Booked</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <div id="availability-status"></div>
                 </div>
@@ -248,6 +271,44 @@
             margin-top: 8px;
             display: block;
         }
+
+        /* Slot availability styles */
+        .availability-slot {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .availability-slot.available {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #10b981;
+        }
+
+        .availability-slot.available:hover {
+            background: #10b981;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .availability-slot.booked {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border-color: #ef4444;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .availability-slot.checking {
+            background: #e0e7ff;
+            color: #3730a3;
+            border-color: #6366f1;
+        }
     </style>
 
     <script>
@@ -260,6 +321,7 @@
             const slotSelectorGroup = $('#slot-selector-group');
             const customTimeGroup = $('#custom-time-group');
             const timeSlotField = $('#id_time_slot');
+            const availabilityInfoGroup = $('#availability-info-group');
 
             function updateTimeInputMode() {
                 if (useSlotCheckbox.is(':checked')) {
@@ -335,6 +397,7 @@
 
             // Availability Check
             $('#id_venue').on('change', checkAvailability);
+            $('#id_start_time').on('change', loadSlotAvailability);
 
             function checkAvailability() {
                 const venue = $('#id_venue').val();
@@ -353,10 +416,10 @@
                         dataType: 'json',
                         success: function (data) {
                             if (data.status === 'available') {
-                                statusDiv.html('<span class="status-available"><i class="fas fa-check-circle"></i> Venue is Available!</span>');
+                                statusDiv.html('<span class="status-available"><i class="fas fa-check-circle"></i> ✅ Venue is Available!</span>');
                                 btn.prop('disabled', false);
                             } else {
-                                statusDiv.html('<span class="status-taken"><i class="fas fa-times-circle"></i> Venue is Busy at this time.</span>');
+                                statusDiv.html('<span class="status-taken"><i class="fas fa-times-circle"></i> ❌ Venue is Booked at this time.</span>');
                                 btn.prop('disabled', true);
                             }
                         },
@@ -365,6 +428,81 @@
                         }
                     });
                 }
+            }
+
+            // Load slot availability for selected date
+            function loadSlotAvailability() {
+                const venue = $('#id_venue').val();
+                const startTimeInput = $('#id_start_time').val();
+
+                if (!venue || !startTimeInput) {
+                    availabilityInfoGroup.hide();
+                    return;
+                }
+
+                // Extract date from start_time
+                const dateStr = startTimeInput.split(' ')[0];
+
+                // Show loading state
+                availabilityInfoGroup.show();
+                $('#selected-date-display').text('📅 ' + formatDate(dateStr));
+                const grid = $('#slot-availability-grid');
+                grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #0369a1;"><i class="fas fa-spinner fa-spin"></i> Loading slots...</div>');
+
+                // Call API to get availability
+                $.ajax({
+                    url: "{% url 'get_availability' %}",
+                    data: { 'venue_id': venue, 'date': dateStr },
+                    dataType: 'json',
+                    success: function (data) {
+                        renderSlotAvailability(data, dateStr);
+                    },
+                    error: function() {
+                        grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #dc2626;">Error loading availability</div>');
+                    }
+                });
+            }
+
+            function renderSlotAvailability(data, dateStr) {
+                const grid = $('#slot-availability-grid');
+                grid.html('');
+
+                const allSlots = data.available_slots.concat(data.booked_slots);
+                allSlots.sort((a, b) => a.start.localeCompare(b.start));
+
+                const bookedSet = new Set(data.booked_slots.map(s => s.display));
+
+                if (allSlots.length === 0) {
+                    grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #666; padding: 20px;">No time slots available</div>');
+                    return;
+                }
+
+                allSlots.forEach(slot => {
+                    const isBooked = bookedSet.has(slot.display);
+                    const slotClass = isBooked ? 'booked' : 'available';
+                    const icon = isBooked ? '🔴' : '🟢';
+
+                    const slotBtn = $(`<div class="availability-slot ${slotClass}">${icon} ${slot.display}</div>`);
+
+                    if (!isBooked) {
+                        slotBtn.on('click', function() {
+                            // Auto-fill the form with selected slot
+                            $('#id_start_time').val(dateStr + ' ' + slot.start);
+                            $('#id_end_time').val(dateStr + ' ' + slot.end);
+
+                            // If using custom time mode, it's already filled
+                            // If using preset mode, match the slot
+                            checkAvailability();
+                        });
+                    }
+
+                    grid.append(slotBtn);
+                });
+            }
+
+            function formatDate(dateStr) {
+                const date = new Date(dateStr + 'T00:00:00');
+                return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
             }
         });
     </script>
