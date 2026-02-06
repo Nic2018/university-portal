@@ -14,7 +14,7 @@ from django.utils import timezone
 import json
 import re
 
-from .models import Venue, Booking
+from .models import Venue, Booking, VenueSchedule
 from .forms import BookingForm, VenueSearchForm
 from .utils import Calendar
 
@@ -147,14 +147,36 @@ def create_booking_view(request):
 
     if request.method == 'POST':
         form = BookingForm(request.POST, request.FILES)
-        
+
         if form.is_valid():
             booking = form.save(commit=False)
-            booking.user = request.user 
-            
+            booking.user = request.user
+
             # --- AUTO-FILL LOGIC ---
             if booking.purpose == 'STUDY' and not booking.event_name:
                 booking.event_name = "Study Session"
+
+            # --- HANDLE TIME SLOT CONVERSION ---
+            if booking.time_slot and form.cleaned_data.get('use_time_slot'):
+                # Parse the time slot (format: "HH:MM-HH:MM") and convert to datetime
+                try:
+                    start_slot, end_slot = booking.time_slot.split('-')
+                    start_hour, start_min = map(int, start_slot.split(':'))
+                    end_hour, end_min = map(int, end_slot.split(':'))
+
+                    # Get the date from start_time or use today
+                    booking_date = booking.start_time.date() if booking.start_time else date.today()
+
+                    # Create datetime objects with the correct date
+                    booking.start_time = timezone.make_aware(
+                        datetime.combine(booking_date, datetime.min.time().replace(hour=start_hour, minute=start_min))
+                    )
+                    booking.end_time = timezone.make_aware(
+                        datetime.combine(booking_date, datetime.min.time().replace(hour=end_hour, minute=end_min))
+                    )
+                except Exception as e:
+                    messages.error(request, f"❌ Error parsing time slot: {str(e)}")
+                    return render(request, 'create_booking.html', {'form': form})
 
             try:
                 booking.full_clean()  # Validates all constraints including time validation
@@ -171,14 +193,22 @@ def create_booking_view(request):
         venue_id = request.GET.get('venue')
         if venue_id:
             initial_data['venue'] = venue_id
-        date_param = request.GET.get('date') 
+        date_param = request.GET.get('date')
         if date_param:
             initial_data['start_time'] = f"{date_param} 09:00"
             initial_data['end_time'] = f"{date_param} 22:00"
 
         form = BookingForm(initial=initial_data)
-    
-    return render(request, 'create_booking.html', {'form': form})
+
+    # Get schedule for display
+    schedule = VenueSchedule.get_schedule()
+    context = {
+        'form': form,
+        'schedule': schedule,
+        'time_slots': schedule.get_time_slots(),
+    }
+
+    return render(request, 'create_booking.html', context)
 
 # --- DETAIL VIEW ---
 @login_required(login_url='login')
@@ -189,17 +219,39 @@ def booking_detail_view(request, booking_id):
 @login_required(login_url='login')
 def modify_booking_view(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id, user=request.user)
-    
+
     # Don't allow modification of rejected bookings
     if booking.status == 'REJECTED':
         messages.error(request, "❌ Cannot modify rejected bookings.")
         return redirect('my_bookings')
-    
+
     if request.method == 'POST':
         form = BookingForm(request.POST, request.FILES, instance=booking)
         if form.is_valid():
             try:
                 booking = form.save(commit=False)
+
+                # --- HANDLE TIME SLOT CONVERSION ---
+                if booking.time_slot and form.cleaned_data.get('use_time_slot'):
+                    try:
+                        start_slot, end_slot = booking.time_slot.split('-')
+                        start_hour, start_min = map(int, start_slot.split(':'))
+                        end_hour, end_min = map(int, end_slot.split(':'))
+
+                        # Get the date from start_time or use today
+                        booking_date = booking.start_time.date() if booking.start_time else date.today()
+
+                        # Create datetime objects with the correct date
+                        booking.start_time = timezone.make_aware(
+                            datetime.combine(booking_date, datetime.min.time().replace(hour=start_hour, minute=start_min))
+                        )
+                        booking.end_time = timezone.make_aware(
+                            datetime.combine(booking_date, datetime.min.time().replace(hour=end_hour, minute=end_min))
+                        )
+                    except Exception as e:
+                        messages.error(request, f"❌ Error parsing time slot: {str(e)}")
+                        return render(request, 'modify_booking.html', {'form': form, 'booking': booking})
+
                 booking.full_clean()  # Validate constraints
                 booking.status = 'PENDING'  # Reset to pending for re-approval
                 booking.approved_by = None  # Clear approval
@@ -213,8 +265,17 @@ def modify_booking_view(request, booking_id):
             messages.error(request, "❌ Please fix the form errors below.")
     else:
         form = BookingForm(instance=booking)
-    
-    return render(request, 'modify_booking.html', {'form': form, 'booking': booking})
+
+    # Get schedule for display
+    schedule = VenueSchedule.get_schedule()
+    context = {
+        'form': form,
+        'booking': booking,
+        'schedule': schedule,
+        'time_slots': schedule.get_time_slots(),
+    }
+
+    return render(request, 'modify_booking.html', context)
 
 @login_required(login_url='login')
 def calendar_view(request):
@@ -234,6 +295,71 @@ def get_date(req_day):
         year, month = (int(x) for x in req_day.split('-'))
         return date(year, month, day=1)
     return datetime.today()
+
+@login_required(login_url='login')
+def get_availability_json(request):
+    """API endpoint that returns available time slots for a venue on a given date"""
+    venue_id = request.GET.get('venue_id')
+    booking_date = request.GET.get('date')  # Format: YYYY-MM-DD
+
+    if not venue_id or not booking_date:
+        return JsonResponse({'error': 'Missing venue_id or date'}, status=400)
+
+    try:
+        venue = Venue.objects.get(id=venue_id)
+        booking_date_obj = datetime.strptime(booking_date, '%Y-%m-%d').date()
+    except (Venue.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'Invalid venue or date'}, status=400)
+
+    # Get schedule and all time slots
+    schedule = VenueSchedule.get_schedule()
+    all_slots = schedule.get_time_slots()
+
+    # Get approved bookings for that venue on that date
+    bookings_that_day = Booking.objects.filter(
+        venue=venue,
+        status='APPROVED',
+        start_time__date=booking_date_obj
+    )
+
+    # Create a set of booked time ranges
+    booked_ranges = []
+    for booking in bookings_that_day:
+        booked_ranges.append({
+            'start': booking.start_time.strftime('%H:%M'),
+            'end': booking.end_time.strftime('%H:%M'),
+        })
+
+    # Check which slots are available
+    available_slots = []
+    booked_slots = []
+
+    for slot in all_slots:
+        is_booked = False
+        for booked in booked_ranges:
+            # Check if slot overlaps with any booked time
+            slot_start = datetime.strptime(slot['start'], '%H:%M').time()
+            slot_end = datetime.strptime(slot['end'], '%H:%M').time()
+            booked_start = datetime.strptime(booked['start'], '%H:%M').time()
+            booked_end = datetime.strptime(booked['end'], '%H:%M').time()
+
+            if slot_start < booked_end and slot_end > booked_start:
+                is_booked = True
+                break
+
+        if is_booked:
+            booked_slots.append(slot)
+        else:
+            available_slots.append(slot)
+
+    return JsonResponse({
+        'available_slots': available_slots,
+        'booked_slots': booked_slots,
+        'operating_hours': {
+            'open': schedule.open_hour,
+            'close': schedule.close_hour,
+        },
+    })
 
 @login_required(login_url='login')
 def my_bookings_view(request):

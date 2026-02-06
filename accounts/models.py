@@ -6,13 +6,64 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+# 0. Global Schedule Configuration
+class VenueSchedule(models.Model):
+    """Global operating hours and time slot configuration for all venues"""
+    open_hour = models.IntegerField(default=8, help_text="Opening hour (0-23)")
+    close_hour = models.IntegerField(default=20, help_text="Closing hour (0-23)")
+    slot_duration_minutes = models.IntegerField(default=60, help_text="Duration of each time slot in minutes")
+    days_in_advance = models.IntegerField(default=30, help_text="Maximum days in advance for bookings")
+
+    class Meta:
+        verbose_name_plural = "Venue Schedule"
+
+    def __str__(self):
+        return f"Schedule: {self.open_hour}:00 - {self.close_hour}:00 ({self.slot_duration_minutes} min slots)"
+
+    @classmethod
+    def get_schedule(cls):
+        """Get or create default schedule"""
+        schedule, _ = cls.objects.get_or_create(pk=1)
+        return schedule
+
+    def get_time_slots(self):
+        """Generate list of all available time slots for the day"""
+        slots = []
+        current_hour = self.open_hour
+        current_minute = 0
+
+        while True:
+            end_hour = current_hour
+            end_minute = current_minute + self.slot_duration_minutes
+
+            if end_minute >= 60:
+                end_hour += end_minute // 60
+                end_minute = end_minute % 60
+
+            if end_hour > self.close_hour:
+                break
+
+            slot_display = f"{current_hour:02d}:{current_minute:02d}-{end_hour:02d}:{end_minute:02d}"
+            slots.append({
+                'display': slot_display,
+                'start': f"{current_hour:02d}:{current_minute:02d}",
+                'end': f"{end_hour:02d}:{end_minute:02d}",
+            })
+
+            current_minute += self.slot_duration_minutes
+            if current_minute >= 60:
+                current_hour += current_minute // 60
+                current_minute = current_minute % 60
+
+        return slots
+
 # 1. The Venue Table
 class Venue(models.Model):
     name = models.CharField(max_length=200, help_text="e.g. Lecture Hall A")
     location = models.CharField(max_length=200, help_text="e.g. Block B, Level 2")
     capacity = models.IntegerField(help_text="How many people can fit?")
     equipment = models.CharField(max_length=200, blank=True, help_text="e.g. Projector, Wifi, AC")
-    
+
     def __str__(self):
         return f"{self.name} ({self.location})"
 
@@ -54,6 +105,7 @@ class Booking(models.Model):
     
     addon_equipment = models.TextField(blank=True, null=True, help_text="List any extra equipment needed (e.g., Extra Mic, Extension Cord).")
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
+    time_slot = models.CharField(max_length=20, blank=True, null=True, help_text="Selected time slot (e.g. 09:00-10:00)")
 
     def clean(self):
         """Validate booking times"""
@@ -64,13 +116,24 @@ class Booking(models.Model):
             errors['end_time'] = 'End time is required.'
         if errors:
             raise ValidationError(errors)
-        
+
         if self.start_time >= self.end_time:
             raise ValidationError({'end_time': "End time must be after start time."})
-        
+
         if self.start_time < timezone.now():
             raise ValidationError({'start_time': "Cannot book for past times."})
-        
+
+        # Check operating hours
+        schedule = VenueSchedule.get_schedule()
+        start_hour = self.start_time.hour
+        end_hour = self.end_time.hour
+
+        if start_hour < schedule.open_hour or start_hour >= schedule.close_hour:
+            raise ValidationError({'start_time': f"Start time must be between {schedule.open_hour}:00 and {schedule.close_hour}:00"})
+
+        if end_hour > schedule.close_hour:
+            raise ValidationError({'end_time': f"End time must be before {schedule.close_hour}:00"})
+
         # Check for clashes
         clashing = Booking.objects.filter(
             venue=self.venue,
@@ -78,11 +141,11 @@ class Booking(models.Model):
             start_time__lt=self.end_time,
             end_time__gt=self.start_time
         )
-        
+
         # Exclude current booking when editing
         if self.pk:
             clashing = clashing.exclude(pk=self.pk)
-        
+
         if clashing.exists():
             # Get the first clashing booking's event name separately to avoid recursion
             first_clash = clashing.first()

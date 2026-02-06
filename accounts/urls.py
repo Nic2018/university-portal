@@ -16,9 +16,12 @@ urlpatterns = [
     # --- Booking ---
     path('create_booking/', views.create_booking_view, name='create_booking'),
     path('modify_booking/<int:booking_id>/', views.modify_booking_view, name='modify_booking'),
-    
+
     # NEW PATH: This handles the link from the Calendar
     path('booking_detail/<int:booking_id>/', views.booking_detail_view, name='booking_detail'),
+
+    # --- API Endpoints ---
+    path('api/get_availability/', views.get_availability_json, name='get_availability'),
 
     # --- User Pages ---
     path('my_bookings/', views.my_bookings_view, name='my_bookings'),

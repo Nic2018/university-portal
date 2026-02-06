@@ -4,22 +4,47 @@ from django.utils.safestring import mark_safe
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from .models import Venue, Booking
+from .models import Venue, Booking, VenueSchedule
+
+# ==========================================
+# MANAGE SCHEDULE
+# ==========================================
+@admin.register(VenueSchedule)
+class VenueScheduleAdmin(admin.ModelAdmin):
+    list_display = ('schedule_display', 'open_hour', 'close_hour', 'slot_duration_minutes', 'days_in_advance')
+    fieldsets = (
+        ('Operating Hours', {
+            'fields': ('open_hour', 'close_hour'),
+            'description': 'Set the global operating hours for all venues (24-hour format, e.g., 8 to 20 for 8 AM to 8 PM)'
+        }),
+        ('Time Slot Configuration', {
+            'fields': ('slot_duration_minutes', 'days_in_advance'),
+            'description': 'Configure duration of each slot and how far in advance users can book'
+        }),
+    )
+
+    @admin.display(description='Schedule')
+    def schedule_display(self, obj):
+        return f"{obj.open_hour:02d}:00 - {obj.close_hour:02d}:00"
+
+    def has_add_permission(self, request):
+        # Only allow one schedule entry
+        return not VenueSchedule.objects.exists()
 
 # ==========================================
 # MANAGE VENUES
 # ==========================================
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
-    list_display = ('name', 'location', 'capacity', 'equipment', 'venue_status') 
-    search_fields = ('name', 'location') 
+    list_display = ('name', 'location', 'capacity', 'equipment', 'venue_status')
+    search_fields = ('name', 'location')
 
     # --- REAL-TIME AVAILABILITY CHECK ---
     @admin.display(description='Current Status')
     def venue_status(self, obj):
         try:
             now = timezone.now()
-            
+
             # Check for bookings happening RIGHT NOW
             is_busy = Booking.objects.filter(
                 venue=obj,
@@ -40,17 +65,17 @@ class VenueAdmin(admin.ModelAdmin):
 # ==========================================
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('event_name', 'user', 'venue', 'start_time', 'colored_status', 'purpose', 'approved_by_display')
+    list_display = ('event_name', 'user', 'venue', 'start_time', 'colored_status', 'purpose', 'time_slot_display', 'approved_by_display')
     list_filter = ('status', 'venue', 'start_time', 'purpose', 'created_at')
     search_fields = ('event_name', 'user__username', 'description')
     readonly_fields = ('created_at', 'updated_at', 'qr_code_display')
-    
+
     fieldsets = (
         ('Booking Details', {
             'fields': ('user', 'venue', 'event_name', 'description', 'purpose')
         }),
         ('Timing', {
-            'fields': ('start_time', 'end_time')
+            'fields': ('start_time', 'end_time', 'time_slot')
         }),
         ('Equipment & Documents', {
             'fields': ('addon_equipment', 'document')
@@ -77,6 +102,13 @@ class BookingAdmin(admin.ModelAdmin):
             return mark_safe(f'<img src="{obj.qr_code.url}" width="200" height="200">')
         return "No QR code generated"
 
+    # Display time slot if selected
+    @admin.display(description='Time Slot')
+    def time_slot_display(self, obj):
+        if obj.time_slot:
+            return f"🎯 {obj.time_slot}"
+        return "—"
+
     # Display approved by info
     @admin.display(description='Approved By')
     def approved_by_display(self, obj):
@@ -96,7 +128,7 @@ class BookingAdmin(admin.ModelAdmin):
         else:
             color = 'orange'
             icon = '⏳'
-            
+
         return format_html(
             '<span style="color: {}; font-weight: bold;">{} {}</span>',
             color, icon, obj.get_status_display()
@@ -110,7 +142,7 @@ class BookingAdmin(admin.ModelAdmin):
             booking.approved_by = request.user
             booking.approved_at = timezone.now()
             booking.save()
-            
+
             # Send email notification
             if booking.user.email:
                 subject = f"Booking Approved: {booking.event_name} ✅"
@@ -144,7 +176,7 @@ Campus Booking Admin
             booking.approved_by = request.user
             booking.approved_at = timezone.now()
             booking.save()
-            
+
             # Send email notification
             if booking.user.email:
                 subject = f"Booking Update: {booking.event_name} ❌"

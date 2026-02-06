@@ -150,6 +150,27 @@
                     {{ form.description }}
                 </div>
 
+                <!-- TIME SLOT SECTION -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="id_use_time_slot" name="use_time_slot" {{ form.use_time_slot.value|default:"checked" }} class="form-check-input" style="width: auto;">
+                        <span>Use preset time slot</span>
+                    </label>
+                </div>
+
+                <!-- PRESET TIME SLOTS -->
+                <div class="form-group" id="slot-selector-group">
+                    <label>Select Time Slot</label>
+                    <div id="time-slots-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;">
+                        {% for slot in time_slots %}
+                            <button type="button" class="time-slot-btn" data-slot="{{ slot.display }}" data-start="{{ slot.start }}" data-end="{{ slot.end }}">
+                                {{ slot.display }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                    {{ form.time_slot }}
+                </div>
+
                 <div class="form-group">
                     <label><i class="fas fa-plug" style="margin-right: 5px; color: #4a6cf7;"></i> Add-on Equipment (Optional)</label>
                     {{ form.addon_equipment }}
@@ -157,13 +178,13 @@
                         Need extras? List items like: 1x Mic, HDMI Cable, 2x Whiteboard Markers.
                     </small>
                 </div>
-                
+
                 <div class="form-group hidden-field" id="document-group">
                     <label>Upload Document (Optional)</label>
                     {{ form.document }}
                 </div>
 
-                <div class="form-group" style="display: flex; gap: 20px;">
+                <div class="form-group" style="display: flex; gap: 20px;" id="custom-time-group">
                     <div style="flex: 1;">
                         <label>Start Time</label>
                         <input type="text" id="id_start_time" name="start_time" class="datetime-picker" placeholder="Select Date & Time" value="{{ form.start_time.value|default:'' }}" required>
@@ -177,7 +198,7 @@
                 <div class="form-group">
                     <div id="availability-status"></div>
                 </div>
-                
+
                 <button type="submit" id="submitBtn" class="btn-submit">Confirm Booking</button>
             </form>
         </div>
@@ -187,20 +208,116 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+    <style>
+        #id_time_slot { display: none; }
+
+        .time-slot-btn {
+            padding: 12px 8px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: #333;
+        }
+
+        .time-slot-btn:hover {
+            border-color: #4a6cf7;
+            background: #eff6ff;
+        }
+
+        .time-slot-btn.selected {
+            background: linear-gradient(135deg, #003366 0%, #4a6cf7 100%);
+            color: white;
+            border-color: #4a6cf7;
+        }
+
+        #time-slots-container {
+            margin-bottom: 20px;
+        }
+
+        #slot-selector-group {
+            display: none;
+        }
+
+        .slot-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 8px;
+            display: block;
+        }
+    </style>
+
     <script>
         $(document).ready(function() {
             // Select2
             $('#id_venue').select2({ width: '100%', placeholder: "Select a Venue...", allowClear: true });
 
+            // Toggle between preset slots and custom time
+            const useSlotCheckbox = $('#id_use_time_slot');
+            const slotSelectorGroup = $('#slot-selector-group');
+            const customTimeGroup = $('#custom-time-group');
+            const timeSlotField = $('#id_time_slot');
+
+            function updateTimeInputMode() {
+                if (useSlotCheckbox.is(':checked')) {
+                    slotSelectorGroup.show();
+                    customTimeGroup.hide();
+                    $('#id_start_time, #id_end_time').removeAttr('required');
+                } else {
+                    slotSelectorGroup.hide();
+                    customTimeGroup.show();
+                    $('#id_start_time, #id_end_time').attr('required', 'required');
+                }
+            }
+
+            useSlotCheckbox.on('change', updateTimeInputMode);
+            updateTimeInputMode();
+
             // Date Pickers
-            let baseConfig = { 
-                enableTime: true, 
-                dateFormat: "Y-m-d H:i", 
+            let baseConfig = {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
                 time_24hr: true,
-                onClose: function() { checkAvailability(); } 
+                onClose: function() { checkAvailability(); }
             };
             flatpickr("#id_start_time", baseConfig);
             flatpickr("#id_end_time", baseConfig);
+
+            // Time slot button clicks
+            $('.time-slot-btn').on('click', function(e) {
+                e.preventDefault();
+
+                // Get the venue and date
+                const venue = $('#id_venue').val();
+                const startTimeInput = $('#id_start_time').val();
+
+                if (!startTimeInput) {
+                    alert('Please select a date first');
+                    return;
+                }
+
+                // Update selected slot
+                $('.time-slot-btn').removeClass('selected');
+                $(this).addClass('selected');
+
+                // Set the time slot field
+                const slot = $(this).data('slot');
+                timeSlotField.val(slot);
+
+                // Parse the date and slot times
+                const [dateStr, timeStr] = startTimeInput.split(' ');
+                const startTime = $(this).data('start');
+                const endTime = $(this).data('end');
+
+                // Update start and end times with the selected slot
+                $('#id_start_time').val(dateStr + ' ' + startTime);
+                $('#id_end_time').val(dateStr + ' ' + endTime);
+
+                checkAvailability();
+            });
 
             // Toggle Fields
             function toggleFields() {
@@ -214,11 +331,11 @@
                 }
             }
             $('#id_purpose').change(toggleFields);
-            toggleFields(); 
+            toggleFields();
 
             // Availability Check
             $('#id_venue').on('change', checkAvailability);
-            
+
             function checkAvailability() {
                 const venue = $('#id_venue').val();
                 const start = $('#id_start_time').val();
@@ -237,10 +354,10 @@
                         success: function (data) {
                             if (data.status === 'available') {
                                 statusDiv.html('<span class="status-available"><i class="fas fa-check-circle"></i> Venue is Available!</span>');
-                                btn.prop('disabled', false); 
+                                btn.prop('disabled', false);
                             } else {
                                 statusDiv.html('<span class="status-taken"><i class="fas fa-times-circle"></i> Venue is Busy at this time.</span>');
-                                btn.prop('disabled', true); 
+                                btn.prop('disabled', true);
                             }
                         },
                         error: function() {
