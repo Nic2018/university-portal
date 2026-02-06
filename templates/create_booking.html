@@ -343,7 +343,13 @@
                 enableTime: true,
                 dateFormat: "Y-m-d H:i",
                 time_24hr: true,
-                onClose: function() { checkAvailability(); }
+                onClose: function() {
+                    checkAvailability();
+                    loadSlotAvailability(); // Load availability when date is picked
+                },
+                onChange: function() {
+                    loadSlotAvailability(); // Also load on change
+                }
             };
             flatpickr("#id_start_time", baseConfig);
             flatpickr("#id_end_time", baseConfig);
@@ -447,7 +453,7 @@
                 availabilityInfoGroup.show();
                 $('#selected-date-display').text('📅 ' + formatDate(dateStr));
                 const grid = $('#slot-availability-grid');
-                grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #0369a1;"><i class="fas fa-spinner fa-spin"></i> Loading slots...</div>');
+                grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #0369a1; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Loading available slots...</div>');
 
                 // Call API to get availability
                 $.ajax({
@@ -457,8 +463,9 @@
                     success: function (data) {
                         renderSlotAvailability(data, dateStr);
                     },
-                    error: function() {
-                        grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #dc2626;">Error loading availability</div>');
+                    error: function(xhr, status, error) {
+                        console.error('Error loading availability:', error);
+                        grid.html('<div style="grid-column: 1 / -1; text-align: center; color: #dc2626; padding: 20px;"><i class="fas fa-exclamation-circle"></i> Error loading availability</div>');
                     }
                 });
             }
