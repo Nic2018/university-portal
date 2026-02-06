@@ -136,10 +136,11 @@ class Booking(models.Model):
         if end_hour > schedule.close_hour or (end_hour == schedule.close_hour and end_minute > 0):
             raise ValidationError({'end_time': f"End time must be before {schedule.close_hour}:00"})
 
-        # Check for clashes
+        # Check for clashes with BOTH approved and pending bookings
+        # This prevents users from creating multiple conflicting bookings
         clashing = Booking.objects.filter(
             venue=self.venue,
-            status='APPROVED',
+            status__in=['APPROVED', 'PENDING'],  # ← Check both statuses
             start_time__lt=self.end_time,
             end_time__gt=self.start_time
         )

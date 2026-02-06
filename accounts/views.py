@@ -315,10 +315,11 @@ def get_availability_json(request):
     schedule = VenueSchedule.get_schedule()
     all_slots = schedule.get_time_slots()
 
-    # Get approved bookings for that venue on that date
+    # Get approved and pending bookings for that venue on that date
+    # (PENDING bookings should block slots since they're already reserved in principle)
     bookings_that_day = Booking.objects.filter(
         venue=venue,
-        status='APPROVED',
+        status__in=['APPROVED', 'PENDING'],
         start_time__date=booking_date_obj
     )
 
@@ -427,7 +428,7 @@ def check_availability(request):
     if venue_id and start_time and end_time:
         is_taken = Booking.objects.filter(
             venue_id=venue_id,
-            status='APPROVED',
+            status__in=['APPROVED', 'PENDING'],  # ← Check both statuses
             start_time__lt=end_time,
             end_time__gt=start_time
         ).exists()
